@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.vercel/
+.env*
+!.env.example
+.private/
+.clasp.json
+gas/Secrets.js
+test-results/
+*.log
+*.tsbuildinfo
+
+.vercel

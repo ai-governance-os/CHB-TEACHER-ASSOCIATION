@@ -1,0 +1,6 @@
+.private
+.env*
+gas
+tests
+test-results
+*.tsbuildinfo

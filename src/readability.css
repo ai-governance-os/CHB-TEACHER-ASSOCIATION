@@ -1,0 +1,221 @@
+/* Clear reading sizes for financial work, including Chinese names and amounts. */
+@media screen {
+  .sidebar-school {
+    font-size: 14px;
+  }
+  .sidebar-school span {
+    font-size: 12px;
+  }
+  .sidebar nav button {
+    font-size: 14px;
+  }
+  .primary,
+  .secondary,
+  .danger-button,
+  .heading-actions .primary,
+  .heading-actions .secondary {
+    font-size: 14px;
+  }
+  .page-heading p {
+    font-size: 14px;
+    color: #718184;
+  }
+  .period-tabs button,
+  .period-selects input,
+  .period-selects select {
+    font-size: 13px;
+  }
+  .metric-label,
+  .balance-top > span:first-child {
+    font-size: 14px;
+  }
+  .metric-bottom,
+  .balance-bottom {
+    font-size: 12px;
+  }
+  .panel-heading h2 {
+    font-size: 17px;
+  }
+  .panel-heading p,
+  .chart-legend {
+    font-size: 12px;
+  }
+  .category-legend {
+    font-size: 12px;
+  }
+  .category-legend b {
+    font-size: 13px;
+  }
+  .donut span {
+    font-size: 12px;
+  }
+  .transaction-description strong {
+    font-size: 14px;
+    color: #344d52;
+  }
+  .transaction-description small {
+    font-size: 12px;
+    color: #7b8e91;
+  }
+  .transaction-description .table-note {
+    font-size: 11px;
+    color: #849497;
+  }
+  .transaction-table th {
+    font-size: 12px;
+    color: #708487;
+  }
+  .date-cell {
+    font-size: 12px !important;
+    color: #75898c;
+  }
+  .type-badge {
+    font-size: 12px;
+  }
+  .transaction-amount {
+    font-size: 14px !important;
+  }
+  .text-button {
+    font-size: 13px;
+  }
+  .result-summary,
+  .result-actions button {
+    font-size: 12px;
+  }
+  .search-toolbar select,
+  .search-input input {
+    font-size: 14px;
+  }
+  .form-grid label,
+  .void-reason,
+  .login-form label {
+    font-size: 14px;
+  }
+  .form-grid input,
+  .form-grid select,
+  .form-grid textarea {
+    font-size: 14px;
+  }
+  .form-footer > span {
+    font-size: 11px;
+  }
+  .login-form > p {
+    font-size: 14px;
+    color: #74897b;
+  }
+  .login-privacy {
+    font-size: 11px;
+  }
+  .login-form input {
+    font-size: 15px;
+  }
+  .setup-notice p {
+    font-size: 13px;
+  }
+  .demo-banner {
+    font-size: 12px;
+    color: #767553;
+  }
+  .demo-banner button {
+    font-size: 12px;
+  }
+  .settings-panel dl > div {
+    font-size: 14px;
+  }
+  .source-note p {
+    font-size: 13px;
+    color: #748a7b;
+  }
+  .source-note h3 {
+    font-size: 14px;
+  }
+  .category-tags > span {
+    font-size: 13px;
+  }
+  .timeline-row strong,
+  .timeline-row p {
+    font-size: 14px;
+  }
+  .timeline-row small {
+    font-size: 12px;
+  }
+  .topbar-right,
+  .breadcrumb,
+  .sync-badge {
+    font-size: 12px;
+  }
+  .app-footer {
+    font-size: 11px;
+  }
+  .app-footer > span:last-child {
+    font-size: 10px;
+  }
+}
+@media screen and (max-width: 760px) {
+  .topbar-right,
+  .breadcrumb,
+  .sync-badge {
+    font-size: 10px;
+  }
+  .page-heading p {
+    font-size: 12px;
+  }
+  .heading-actions .primary {
+    font-size: 12px;
+  }
+  .period-tabs button {
+    font-size: 12px;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+  .period-selects input,
+  .period-selects select {
+    font-size: 12px;
+  }
+  .demo-banner {
+    font-size: 11px;
+  }
+  .demo-banner button {
+    font-size: 10px;
+  }
+  .metric-label {
+    font-size: 13px;
+  }
+  .metric-bottom,
+  .balance-bottom {
+    font-size: 11px;
+  }
+  .transaction-description strong {
+    font-size: 13px;
+  }
+  .transaction-description small,
+  .type-badge {
+    font-size: 11px;
+  }
+  .transaction-table th {
+    font-size: 11px;
+  }
+  .search-toolbar select {
+    font-size: 12px;
+  }
+  .search-input input {
+    font-size: 14px;
+  }
+  .form-grid input,
+  .form-grid select,
+  .form-grid textarea {
+    font-size: 16px;
+  }
+  .form-footer > span {
+    font-size: 10px;
+  }
+  .app-footer {
+    font-size: 9px;
+  }
+  .app-footer > span:last-child {
+    font-size: 8px;
+  }
+  .report-actions .primary {
+    font-size: 11px;
+  }
+}
