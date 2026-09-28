@@ -57,16 +57,28 @@ function doPost(e) {
         throw new Error("账本操作失败，请稍后重试");
       var allowed;
       try {
+        var checked = typeof request.credentialValid === "boolean";
         var cache = CacheService.getScriptCache(),
-          key = "login:" + request.key,
+          key = (checked ? "login-failures:" : "login:") + request.key,
           n = Number(cache.get(key) || 0);
-        cache.put(key, String(n + 1), 900);
         allowed = n < 12;
+        // New counters measure failed passwords. Keep legacy callers compatible
+        // during deployment. Blocked requests cannot extend the lockout forever.
+        if (allowed)
+          cache.put(
+            key,
+            String(checked && request.credentialValid ? 0 : n + 1),
+            900,
+          );
       } finally {
         loginLock.releaseLock();
       }
       var result = { allowed: allowed };
-      if (allowed && request.includeLedger === true) {
+      if (
+        allowed &&
+        request.includeLedger === true &&
+        (!checked || request.credentialValid)
+      ) {
         result.ledger = readLedger_(
           SpreadsheetApp.openById(config.spreadsheetId),
           bookTarget_(request.ledgerId),

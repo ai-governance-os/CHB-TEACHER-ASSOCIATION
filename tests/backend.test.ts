@@ -205,4 +205,34 @@ test("durable event append is idempotent, rejects stale edits and keeps void aud
   assert.equal(limited.data.ledger, undefined);
   assert.equal(loginReads, 12, "a blocked attempt never reads financial data");
   assert.equal(locked, false);
+  const verified = {
+    action: "throttle",
+    key: "checked-account",
+    ledgerId: "pta",
+    includeLedger: true,
+    credentialValid: true,
+  };
+  for (let i = 0; i < 18; i++)
+    assert.equal(
+      call(verified).data.allowed,
+      true,
+      "successful sign-ins do not consume password-error attempts",
+    );
+  assert.equal(loginAttempts.get("login-failures:checked-account"), "0");
+  const beforeWrong = loginReads;
+  for (let i = 0; i < 6; i++) {
+    const wrong = call({ ...verified, credentialValid: false });
+    assert.equal(wrong.data.allowed, true);
+    assert.equal(wrong.data.ledger, undefined);
+  }
+  assert.equal(loginReads, beforeWrong, "wrong passwords never read a sheet");
+  assert.equal(call(verified).data.allowed, true);
+  assert.equal(loginAttempts.get("login-failures:checked-account"), "0");
+  for (let i = 0; i < 12; i++) call({ ...verified, credentialValid: false });
+  assert.equal(
+    call(verified).data.allowed,
+    false,
+    "a correct password still cannot bypass an active lockout",
+  );
+  assert.equal(loginAttempts.get("login-failures:checked-account"), "12");
 });

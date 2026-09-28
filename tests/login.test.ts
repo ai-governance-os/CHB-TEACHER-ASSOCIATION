@@ -31,7 +31,12 @@ test("one login round trip returns a snapshot only after BOTH password and globa
     ]),
   });
   let allowed = true;
-  const calls: { key: string; includeLedger: boolean; ledgerId: string }[] = [];
+  const calls: {
+    key: string;
+    includeLedger: boolean;
+    ledgerId: string;
+    credentialValid: boolean;
+  }[] = [];
   globalThis.fetch = async (_url, init) => {
     calls.push(JSON.parse(JSON.parse(String(init?.body)).body));
     return new Response(
@@ -55,7 +60,13 @@ test("one login round trip returns a snapshot only after BOTH password and globa
         origin: "http://localhost",
         "x-real-ip": "127.0.0.1",
       },
-      body: { username, password, includeLedger: true, ledgerId },
+      body: {
+        username,
+        password,
+        includeLedger: true,
+        ledgerId,
+        credentialValid: true,
+      },
     } as unknown as IncomingMessage;
     const res = {
       statusCode: 0,
@@ -75,6 +86,7 @@ test("one login round trip returns a snapshot only after BOTH password and globa
     assert.equal(good.data.ledger.id, "teachers");
     assert.equal(calls.length, 1);
     assert.equal(calls[0].includeLedger, true);
+    assert.equal(calls[0].credentialValid, true);
     assert.match(
       String(good.headers["Set-Cookie"]),
       /HttpOnly; SameSite=Strict/,
@@ -83,6 +95,11 @@ test("one login round trip returns a snapshot only after BOTH password and globa
     assert.equal(bad.status, 401);
     assert.equal(bad.data.ledger, undefined);
     assert.equal(bad.headers["Set-Cookie"], undefined);
+    assert.equal(
+      calls[1].credentialValid,
+      false,
+      "client cannot spoof successful password verification",
+    );
     assert.equal(
       calls[0].key,
       calls[1].key,

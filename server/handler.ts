@@ -161,6 +161,11 @@ export default async function handler(req: Request, res: ServerResponse) {
         .digest("hex");
       const ledgerId = b.ledgerId ?? "teachers";
       if (!isBookId(ledgerId)) throw new HttpError(400, "账本无效");
+      const u = users().find(
+        (u) => u.username.toLowerCase() === b.username.trim().toLowerCase(),
+      );
+      // Only this trusted server computes this flag; never accept it from the client.
+      const credentialValid = !!u && checkPassword(b.password, u.passwordHash);
       // Reserve the login attempt and obtain its first snapshot in ONE Google round trip.
       // No session or financial data is returned until both rate limit and password pass.
       const throttle = await backend<{ allowed: boolean; ledger?: Ledger }>(
@@ -169,15 +174,12 @@ export default async function handler(req: Request, res: ServerResponse) {
           key,
           ledgerId,
           includeLedger: b.includeLedger === true,
+          credentialValid,
         },
       );
       if (!throttle.allowed)
         throw new HttpError(429, "尝试次数过多，请 15 分钟后再试");
-      const u = users().find(
-        (u) => u.username.toLowerCase() === b.username.trim().toLowerCase(),
-      );
-      if (!u || !checkPassword(b.password, u.passwordHash))
-        throw new HttpError(401, "账户或密码不正确");
+      if (!u || !credentialValid) throw new HttpError(401, "账户或密码不正确");
       res.setHeader(
         "Set-Cookie",
         "chb_session=" +
