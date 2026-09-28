@@ -1,12 +1,30 @@
 import { createHmac, randomUUID } from "node:crypto";
+import { withReadFallback } from "./read-fallback.js";
 export async function backend<T>(
   action: string,
   payload: Record<string, unknown> = {},
 ): Promise<T> {
+  if (
+    action === "read" ||
+    (action === "throttle" && payload.credentialValid === true)
+  ) {
+    return withReadFallback((signal) =>
+      requestBackend<T>(action, payload, signal, 1),
+    );
+  }
+  // Financial writes and failed passwords must never run speculative duplicates.
+  return requestBackend<T>(action, payload);
+}
+async function requestBackend<T>(
+  action: string,
+  payload: Record<string, unknown>,
+  outerSignal?: AbortSignal,
+  attempts = 2,
+): Promise<T> {
   const url = process.env.LEDGER_BACKEND_URL,
     secret = process.env.LEDGER_BACKEND_SECRET;
   if (!url || !secret) throw new Error("Google Sheets 尚未连接");
-  for (let attempt = 0; attempt < 2; attempt++) {
+  for (let attempt = 0; attempt < attempts; attempt++) {
     const body = JSON.stringify({
       action,
       ...payload,
@@ -25,7 +43,10 @@ export async function backend<T>(
     try {
       let target = url;
       let method = "POST";
-      const signal = AbortSignal.timeout(30000);
+      const deadline = AbortSignal.timeout(30000);
+      const signal = outerSignal
+        ? AbortSignal.any([deadline, outerSignal])
+        : deadline;
       let response: Response | undefined;
       for (let hop = 0; hop < 5; hop++) {
         hops = hop;
@@ -78,6 +99,7 @@ export async function backend<T>(
       if (result.ok && result.data === undefined)
         throw new Error("Missing ledger result");
     } catch (error) {
+      if (outerSignal?.aborted) throw error;
       console.warn("Ledger transport retry", {
         action,
         attempt: attempt + 1,
@@ -86,7 +108,7 @@ export async function backend<T>(
         status,
         hops,
       });
-      if (attempt === 0) continue;
+      if (attempt + 1 < attempts) continue;
       throw new Error("Google Sheets 连接暂时中断，内容已保留，请重试");
     }
     if (!result.ok) throw new Error(result.error || "账本操作失败");

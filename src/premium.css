@@ -67,6 +67,8 @@ textarea::placeholder {
   letter-spacing: 2px;
 }
 .sidebar {
+  overflow-y: auto;
+  overscroll-behavior: contain;
   background: #2a2326;
   color: #bbadab;
   width: 226px;
@@ -143,6 +145,40 @@ textarea::placeholder {
   border-top: 1px solid #baa07438;
   border-radius: 0;
   padding: 22px 10px 8px;
+}
+.sidebar-bottom {
+  padding-top: 24px;
+}
+@media (max-height: 820px) and (min-width: 1000px) {
+  .sidebar {
+    padding-top: 25px;
+  }
+  .brand {
+    flex-direction: row;
+    gap: 10px;
+    align-items: center;
+  }
+  .brand img {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+  }
+  .brand strong {
+    font-size: 21px;
+    letter-spacing: 2px;
+  }
+  .brand strong span {
+    font-size: 7px;
+    letter-spacing: 1px;
+  }
+  .sidebar-school {
+    margin-top: 23px;
+    margin-bottom: 20px;
+    padding-bottom: 19px;
+  }
+  .sidebar nav {
+    gap: 5px;
+  }
 }
 .school-note p {
   color: #d0c1ad;

@@ -21,6 +21,7 @@ The login form renders independently of the decoration. Video is requested after
 - Login can return its first ledger snapshot with the same authenticated, globally rate-limited Google request. Password and rate limit must both pass before any cookie or financial data is returned.
 - Correct sign-ins do not consume failed-password attempts. The server signs its own password-verification result; a client-supplied result is ignored. Twelve consecutive failures still block even a correct password until the lock expires. Failure counters use a separate namespace from legacy all-attempt counters because their meanings differ.
 - Redirect response bodies are released explicitly. Result-download timeouts retry sooner; signed Google execution keeps its existing timeout budget.
+- If a read or server-verified successful login has not completed after four seconds, a single backup request can supply the result. The losing connection is aborted. Financial writes and incorrect passwords never use speculative requests; a correct password still cannot bypass the shared lockout counter.
 - Previously opened ledgers remain in session memory. Switching displays the snapshot immediately; snapshots older than 15 seconds refresh. Manual refresh always reads the source. Writes replace their book's cached snapshot; logout clears every entry. No financial data is saved to localStorage.
 - Vercel function region is Singapore (`sin1`). Google Sheets remains the durable source, so network delays can still vary.
 

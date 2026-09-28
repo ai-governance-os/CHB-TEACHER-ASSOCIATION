@@ -82,3 +82,31 @@ test("a lost response retries the same event ID without accepting a service land
     globalThis.fetch = original;
   }
 });
+
+test("slow financial writes and failed passwords never start speculative requests", async (t) => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  const original = globalThis.fetch;
+  try {
+    for (const action of ["write", "throttle"]) {
+      let calls = 0;
+      let finish!: (response: Response) => void;
+      globalThis.fetch = async () => {
+        calls++;
+        return new Promise<Response>((resolve) => {
+          finish = resolve;
+        });
+      };
+      const pending = backend(action, {
+        credentialValid: false,
+        eventId: "stable-event",
+      });
+      t.mock.timers.tick(10000);
+      assert.equal(calls, 1);
+      finish(Response.json({ ok: true, data: { complete: true } }));
+      await pending;
+      assert.equal(calls, 1);
+    }
+  } finally {
+    globalThis.fetch = original;
+  }
+});
