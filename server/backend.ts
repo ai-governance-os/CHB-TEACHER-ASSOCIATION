@@ -19,12 +19,17 @@ export async function backend<T>(
     );
     const signature = createHmac("sha256", secret).update(body).digest("hex");
     let result: { ok: boolean; data?: T; error?: string };
+    let stage = "start",
+      status = 0,
+      hops = 0;
     try {
       let target = url;
       let method = "POST";
       const signal = AbortSignal.timeout(30000);
       let response: Response | undefined;
       for (let hop = 0; hop < 5; hop++) {
+        hops = hop;
+        stage = method + " " + new URL(target).hostname;
         response = await fetch(target, {
           method,
           ...(method === "POST"
@@ -36,6 +41,7 @@ export async function backend<T>(
           redirect: "manual",
           signal,
         });
+        status = response.status;
         if (![301, 302, 303, 307, 308].includes(response.status)) break;
         const location = response.headers.get("location");
         if (!location) throw new Error("Missing Google redirect");
@@ -55,7 +61,9 @@ export async function backend<T>(
         target = next.href;
       }
       if (!response?.ok) throw new Error("Google transport failed");
+      stage = "decode-json";
       result = await response.json();
+      stage = "validate-result";
       if (result.ok && result.data === undefined)
         throw new Error("Missing ledger result");
     } catch (error) {
@@ -63,6 +71,9 @@ export async function backend<T>(
         action,
         attempt: attempt + 1,
         reason: error instanceof Error ? error.name : "Unknown",
+        stage,
+        status,
+        hops,
       });
       if (attempt === 0) continue;
       throw new Error("Google Sheets 连接暂时中断，内容已保留，请重试");
