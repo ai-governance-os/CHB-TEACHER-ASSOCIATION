@@ -1,6 +1,7 @@
 import type { Ledger, Transaction } from "./types";
+import { books, type BookId } from "./books";
 // Fictional data only. Real school financial records are never included in a public bundle.
-export function demoLedger(): Ledger {
+export function demoLedger(id: BookId = "teachers"): Ledger {
   const y = new Date().getFullYear();
   const rows: Array<[string, "income" | "expense", string, string, number]> =
     [];
@@ -42,8 +43,16 @@ export function demoLedger(): Ledger {
       id: `DEMO-${String(i + 1).padStart(4, "0")}`,
       date: r[0],
       type: r[1],
-      category: r[2],
-      description: r[3],
+      category:
+        id === "teachers"
+          ? r[2]
+          : books[id][
+              r[1] === "income" ? "incomeCategories" : "expenseCategories"
+            ][i % 3],
+      description:
+        id === "teachers"
+          ? r[3]
+          : `${books[id].name}${r[1] === "income" ? "收入" : "支出"}项目 ${i + 1}（演示）`,
       amountCents: r[4],
       party: "",
       note: "虚构演示数据",
@@ -56,9 +65,10 @@ export function demoLedger(): Ledger {
     }),
   );
   return {
+    id,
     transactions: ts,
     events: [],
-    openingDate: `${y}-01-01`,
+    openingDate: "2024-01-01",
     openingCents: 280000,
     sourceNote:
       "当前使用虚构演示数据。演示操作仅在本次页面中保留，不写入学校账本。",

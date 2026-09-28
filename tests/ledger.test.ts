@@ -84,3 +84,48 @@ test("search intersects words across project, party and receipt and ignores case
     1,
   );
 });
+test("incomplete older history cannot silently change a source-backed carry-forward", () => {
+  const l: Ledger = {
+    ...ledger,
+    openingDate: "2024-01-01",
+    openingCents: 10000,
+    balanceCheckpoints: [
+      { date: "2025-01-01", amountCents: 8000, note: "source carry-forward" },
+    ],
+    transactions: [
+      transaction("a", "2024-12-31", "income", 5000),
+      transaction("b", "2025-01-01", "expense", 1000),
+    ],
+  };
+  assert.equal(summary(l, periodFor(2024, "year", 1)).closing, 15000);
+  assert.equal(summary(l, periodFor(2025, "year", 1)).opening, 8000);
+  const all = summary(l, {
+    start: "2024-01-01",
+    end: "2025-12-31",
+    label: "all",
+  });
+  assert.equal(all.adjustment, -7000);
+  assert.equal(all.closing, 7000);
+  assert.equal(all.income, 5000);
+  assert.equal(all.expense, 1000);
+});
+test("internal transfers remain searchable but do not change income, expenditure or balances", () => {
+  const transfer: Transaction = {
+    ...transaction("transfer", "2026-02-01", "expense", 300000),
+    type: "transfer",
+    category: "账户内部转账",
+  };
+  const changed = {
+    ...ledger,
+    transactions: [...ledger.transactions, transfer],
+  };
+  const actual = summary(changed, periodFor(2026, "year", 1)),
+    expected = summary(ledger, periodFor(2026, "year", 1));
+  assert.equal(actual.closing, expected.closing);
+  assert.equal(actual.income, expected.income);
+  assert.equal(actual.expense, expected.expense);
+  assert.equal(
+    filterTransactions(changed.transactions, "", "transfer", "").length,
+    1,
+  );
+});

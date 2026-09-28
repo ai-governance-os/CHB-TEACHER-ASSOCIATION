@@ -1,0 +1,133 @@
+.book-switcher {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 30px;
+}
+.book-choice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 18px;
+  text-align: left;
+  background: #fff;
+  border: 1px solid #e0e6e3;
+  border-radius: 14px;
+  color: #526763;
+  transition:
+    background 0.2s,
+    border-color 0.2s;
+}
+.book-choice.selected {
+  background: #173f49;
+  color: #fff;
+  border-color: #173f49;
+  box-shadow: 0 6px 20px #173f4912;
+}
+.book-choice > span:nth-child(2) {
+  flex: 1;
+  min-width: 0;
+}
+.book-choice strong {
+  display: block;
+  font-size: 16px;
+}
+.book-choice small {
+  display: block;
+  font-size: 11px;
+  margin-top: 5px;
+  opacity: 0.75;
+}
+.book-number {
+  display: grid;
+  place-items: center;
+  height: 32px;
+  width: 32px;
+  flex-shrink: 0;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  opacity: 0.6;
+  font-size: 11px;
+}
+.review-notes {
+  margin: 0 0 22px;
+  border: 1px solid #e4d6b9;
+  background: #fcf8ef;
+  color: #76603b;
+  border-radius: 12px;
+  padding: 14px 18px;
+  font-size: 12px;
+}
+.review-notes summary {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.review-notes summary:after {
+  content: "展开核对说明";
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 400;
+}
+.review-notes[open] summary:after {
+  content: "收起";
+}
+.review-notes ul,
+.report-review ul {
+  padding-left: 20px;
+  line-height: 1.9;
+}
+.review-notes p {
+  margin: 8px 0 0;
+}
+.report-review {
+  font-size: 11px;
+  border: 1px solid #ddd5bd;
+  padding: 12px 16px;
+  margin: 12px 0;
+  background: #fcfaf5;
+}
+.type-badge.transfer,
+.transaction-icon.transfer {
+  color: #7b6134;
+  background: #f5eedf;
+}
+.type-toggle .selected.transfer {
+  background: #f5eedf;
+  color: #7b6134;
+}
+@media (max-width: 700px) {
+  .book-switcher {
+    gap: 6px;
+    margin-bottom: 24px;
+  }
+  .book-choice {
+    display: block;
+    padding: 12px 8px;
+    text-align: center;
+    border-radius: 10px;
+  }
+  .book-number,
+  .book-choice > svg,
+  .book-choice small {
+    display: none;
+  }
+  .book-choice strong {
+    font-size: 13px;
+  }
+  .review-notes {
+    padding: 12px;
+  }
+  .review-notes summary:after {
+    content: "展开";
+  }
+}
+@media print {
+  .report-review {
+    font-size: 9px;
+    background: transparent;
+  }
+}

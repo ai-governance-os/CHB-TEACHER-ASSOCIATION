@@ -10,9 +10,22 @@ import {
   users,
 } from "./security.js";
 import { validDate } from "../src/ledger.js";
-import { incomeCategories, expenseCategories } from "../src/types.js";
+import { books, isBookId, type BookId } from "../src/books.js";
 import type { Ledger, Transaction } from "../src/types.js";
 type Request = IncomingMessage & { body?: unknown };
+// Already-open clients from the single-ledger release do not understand historical checkpoints.
+function responseLedger(data: Ledger, explicitBook: boolean): Ledger {
+  const point = data.balanceCheckpoints?.find((p) => p.date === "2025-01-01");
+  if (explicitBook || data.id !== "teachers" || !point) return data;
+  return {
+    ...data,
+    openingDate: point.date,
+    openingCents: point.amountCents,
+    transactions: data.transactions.filter((t) => t.date >= point.date),
+    events: data.events.filter((e) => e.transaction.date >= point.date),
+    balanceCheckpoints: [],
+  };
+}
 class HttpError extends Error {
   constructor(
     public status: number,
@@ -39,10 +52,14 @@ async function bodyOf(req: Request) {
     throw new HttpError(400, "请求格式无效");
   }
 }
-export function validateTransaction(t: Transaction) {
+export function validateTransaction(
+  t: Transaction,
+  bookId: BookId = "teachers",
+) {
+  const { incomeCategories, expenseCategories } = books[bookId];
   if (!t || typeof t !== "object") throw new HttpError(400, "账目内容无效");
   if (
-    !["income", "expense"].includes(t.type) ||
+    !["income", "expense", "transfer"].includes(t.type) ||
     !["active", "void"].includes(t.status) ||
     !validDate(t.date)
   )
@@ -65,9 +82,13 @@ export function validateTransaction(t: Transaction) {
   }
   if (!t.description.trim()) throw new HttpError(400, "项目不能为空");
   if (
-    !(t.type === "income" ? incomeCategories : expenseCategories).includes(
-      t.category,
-    )
+    !(
+      t.type === "transfer"
+        ? ["账户内部转账"]
+        : t.type === "income"
+          ? [...incomeCategories]
+          : ([...expenseCategories] as string[])
+    ).includes(t.category)
   )
     throw new HttpError(400, "分类无效");
 }
@@ -157,13 +178,17 @@ export default async function handler(req: Request, res: ServerResponse) {
     }
     if (!user) throw new HttpError(401, "请先登录，或登录已过期");
     if (path === "ledger" && req.method === "GET") {
-      const data = await backend<Ledger>("read");
-      return reply(200, data);
+      const ledgerId = url.searchParams.get("ledgerId") || "teachers";
+      if (!isBookId(ledgerId)) throw new HttpError(400, "账本无效");
+      const data = await backend<Ledger>("read", { ledgerId });
+      return reply(200, responseLedger(data, url.searchParams.has("ledgerId")));
     }
     if (path === "transactions" && req.method === "POST") {
       if (user.role === "viewer")
         throw new HttpError(403, "此账户仅可查询与打印");
       const b = await bodyOf(req);
+      const ledgerId = b.ledgerId ?? "teachers";
+      if (!isBookId(ledgerId)) throw new HttpError(400, "账本无效");
       if (
         typeof b.eventId !== "string" ||
         !/^[a-zA-Z0-9-]{16,80}$/.test(b.eventId) ||
@@ -172,8 +197,9 @@ export default async function handler(req: Request, res: ServerResponse) {
         b.expectedVersion < 0
       )
         throw new HttpError(400, "操作参数无效");
-      validateTransaction(b.transaction);
+      validateTransaction(b.transaction, ledgerId);
       const data = await backend<Ledger>("write", {
+        ledgerId,
         eventId: b.eventId,
         operation: b.action,
         transaction: b.transaction,
@@ -181,7 +207,7 @@ export default async function handler(req: Request, res: ServerResponse) {
         actor: user.displayName,
         username: user.username,
       });
-      return reply(200, data);
+      return reply(200, responseLedger(data, b.ledgerId !== undefined));
     }
     throw new HttpError(404, "找不到此操作");
   } catch (error) {

@@ -50,10 +50,11 @@ function doPost(e) {
         return json_({ ok: true, data: { allowed: n < 12 } });
       }
       var book = SpreadsheetApp.openById(config.spreadsheetId);
+      var target = bookTarget_(request.ledgerId);
       if (request.action === "read")
-        return json_({ ok: true, data: readLedger_(book) });
+        return json_({ ok: true, data: readLedger_(book, target) });
       if (request.action === "write") {
-        var ledger = readLedger_(book);
+        var ledger = readLedger_(book, target);
         if (
           ledger.events.some(function (x) {
             return x.eventId === request.eventId;
@@ -123,12 +124,12 @@ function doPost(e) {
           stored.source,
           stored.createdAt,
         ].map(safeCell_);
-        var sheet = book.getSheetByName("账目事件");
+        var sheet = book.getSheetByName(target.events);
         sheet
           .getRange(sheet.getLastRow() + 1, 1, 1, values.length)
           .setValues([values]);
         SpreadsheetApp.flush();
-        return json_({ ok: true, data: readLedger_(book) });
+        return json_({ ok: true, data: readLedger_(book, target) });
       }
       throw new Error("Unknown operation");
     } finally {
@@ -150,9 +151,25 @@ function safeCell_(value) {
     ? "'" + value
     : value;
 }
-function readLedger_(book) {
+function bookTarget_(id) {
+  id = id === undefined ? "teachers" : id;
+  var targets = {
+    teachers: { id: "teachers", events: "账目事件", settings: "账本设置" },
+    pta: { id: "pta", events: "家协账目事件", settings: "家协账本设置" },
+    store: {
+      id: "store",
+      events: "贩卖部账目事件",
+      settings: "贩卖部账本设置",
+    },
+  };
+  if (!Object.prototype.hasOwnProperty.call(targets, id))
+    throw new Error("账本无效");
+  return targets[id];
+}
+function readLedger_(book, target) {
+  target = target || bookTarget_();
   var settings = book
-    .getSheetByName("账本设置")
+    .getSheetByName(target.settings)
     .getDataRange()
     .getValues()
     .slice(1)
@@ -161,7 +178,7 @@ function readLedger_(book) {
       return a;
     }, {});
   var rows = book
-    .getSheetByName("账目事件")
+    .getSheetByName(target.events)
     .getDataRange()
     .getValues()
     .slice(1);
@@ -195,6 +212,9 @@ function readLedger_(book) {
     });
   });
   return {
+    id: target.id,
+    reviewNotes: JSON.parse(settings.reviewNotes || "[]"),
+    balanceCheckpoints: JSON.parse(settings.balanceCheckpoints || "[]"),
     transactions: Object.keys(latest).map(function (k) {
       return latest[k];
     }),
@@ -211,6 +231,8 @@ function dateString_(v) {
     : String(v);
 }
 function iso_(v) {
+  if (typeof v === "number")
+    return new Date(Math.round((v - 25569) * 86400000)).toISOString();
   return v instanceof Date ? v.toISOString() : String(v);
 }
 function validateEntry_(t) {
@@ -227,7 +249,7 @@ function validateEntry_(t) {
   )
     throw new Error("Invalid amount");
   if (
-    !["income", "expense"].includes(t.type) ||
+    !["income", "expense", "transfer"].includes(t.type) ||
     !t.description ||
     t.description.length > 160 ||
     t.note.length > 1500

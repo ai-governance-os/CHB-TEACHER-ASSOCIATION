@@ -29,6 +29,21 @@ test("durable event append is idempotent, rejects stale edits and keeps void aud
         : { getDataRange: () => ({ getValues: () => settings }) },
     getUrl: () => "https://example.invalid/test-sheet",
   };
+  const ptaRows: unknown[][] = [["headers"]];
+  const originalGet = book.getSheetByName;
+  book.getSheetByName = (name: string) =>
+    name === "家协账目事件"
+      ? {
+          getDataRange: () => ({ getValues: () => ptaRows }),
+          getLastRow: () => ptaRows.length,
+          getRange: () => ({
+            setValues: (values: unknown[][]) => {
+              assert.ok(locked);
+              ptaRows.push(...values);
+            },
+          }),
+        }
+      : originalGet(name);
   const context = vm.createContext({
     console,
     Date,
@@ -128,4 +143,26 @@ test("durable event append is idempotent, rejects stale edits and keeps void aud
     call({ ...edit, eventId: "event000000000005", expectedVersion: 3 }).ok,
     false,
   );
+  assert.equal(
+    call({ action: "read", ledgerId: "pta" }).data.transactions.length,
+    0,
+  );
+  assert.equal(
+    call({ ...edit, ledgerId: "pta", eventId: "event000000000099" }).ok,
+    false,
+  );
+  assert.equal(call({ ...create, ledgerId: "pta" }).data.id, "pta");
+  assert.equal(
+    ptaRows.length,
+    2,
+    "same event ID belongs only to its selected ledger",
+  );
+  assert.equal(rows.length, 4, "writing PTA does not touch teacher events");
+  assert.equal(
+    call({ action: "read", ledgerId: "teachers" }).data.transactions[0].status,
+    "void",
+  );
+  for (const ledgerId of ["../teachers", "toString", "__proto__", "bad"]) {
+    assert.equal(call({ ...create, ledgerId }).ok, false);
+  }
 });

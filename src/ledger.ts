@@ -64,23 +64,54 @@ export function periodFor(
 export function summary(ledger: Ledger, period: Period) {
   let opening = ledger.openingCents,
     income = 0,
-    expense = 0;
+    expense = 0,
+    adjustment = 0;
+  // Source-backed carry-forwards keep later verified balances separate from incomplete older records.
+  const checkpoints = [...(ledger.balanceCheckpoints || [])].sort((a, b) =>
+    a.date.localeCompare(b.date),
+  );
+  const active = ledger.transactions.filter((t) => t.status === "active");
+  const signed = (t: Transaction) =>
+    t.type === "transfer"
+      ? 0
+      : t.type === "income"
+        ? t.amountCents
+        : -t.amountCents;
+  let anchorDate = ledger.openingDate;
+  for (const point of checkpoints.filter((p) => p.date <= period.start)) {
+    opening = point.amountCents;
+    anchorDate = point.date;
+  }
+  opening += active
+    .filter((t) => t.date >= anchorDate && t.date < period.start)
+    .reduce((n, t) => n + signed(t), 0);
+  let cursor = period.start,
+    balance = opening;
+  for (const point of checkpoints.filter(
+    (p) => p.date > period.start && p.date <= period.end,
+  )) {
+    balance += active
+      .filter((t) => t.date >= cursor && t.date < point.date)
+      .reduce((n, t) => n + signed(t), 0);
+    adjustment += point.amountCents - balance;
+    balance = point.amountCents;
+    cursor = point.date;
+  }
   const rows: Transaction[] = [];
   for (const t of ledger.transactions) {
     if (t.status !== "active") continue;
-    const signed = t.type === "income" ? t.amountCents : -t.amountCents;
-    if (t.date < period.start) opening += signed;
-    else if (t.date <= period.end) {
+    if (t.date >= period.start && t.date <= period.end) {
       rows.push(t);
       if (t.type === "income") income += t.amountCents;
-      else expense += t.amountCents;
+      else if (t.type === "expense") expense += t.amountCents;
     }
   }
   return {
     opening,
     income,
     expense,
-    closing: opening + income - expense,
+    adjustment,
+    closing: opening + income - expense + adjustment,
     rows: rows.sort(
       (a, b) =>
         a.date.localeCompare(b.date) || a.createdAt.localeCompare(b.createdAt),

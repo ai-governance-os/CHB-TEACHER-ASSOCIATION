@@ -42,7 +42,8 @@ import type {
   TransactionType,
   User,
 } from "./types";
-import { incomeCategories, expenseCategories } from "./types";
+import { books, bookFor, type BookId } from "./books";
+import { typeLabel } from "./types";
 import {
   categoryTotals,
   filterTransactions,
@@ -168,6 +169,11 @@ function Modal({
 }
 
 function App() {
+  const [bookId, setBookId] = useState<BookId>("teachers");
+  const selectedBook = books[bookId];
+  const { incomeCategories, expenseCategories } = selectedBook;
+  const requestGeneration = useRef(0);
+  const demoBooks = useRef<Partial<Record<BookId, Ledger>>>({});
   const [session, setSession] = useState<Session | null>(null),
     [bootError, setBootError] = useState("");
   const [demo, setDemo] = useState(false),
@@ -213,7 +219,7 @@ function App() {
   }, []);
   useEffect(() => {
     if (session?.user && !demo) void refresh();
-  }, [session?.user, demo]);
+  }, [session?.user, demo, bookId]);
   useEffect(() => {
     if (!toast) return;
     const t = setTimeout(() => setToast(""), 4500);
@@ -234,10 +240,13 @@ function App() {
     ],
   );
   async function refresh() {
+    const generation = ++requestGeneration.current;
     setLoading(true);
     setError("");
     try {
-      const data = await api<Ledger>("ledger");
+      const data = await api<Ledger>("ledger", {}, bookId);
+      if (generation !== requestGeneration.current) return;
+      if (data.id !== bookId) throw new Error("账本载入不一致，请重新连接");
       setLedger(data);
       setLastSync(
         new Date().toLocaleTimeString("zh-CN", {
@@ -246,20 +255,24 @@ function App() {
         }),
       );
     } catch (e) {
-      setError((e as Error).message);
+      if (generation === requestGeneration.current)
+        setError((e as Error).message);
     } finally {
-      setLoading(false);
+      if (generation === requestGeneration.current) setLoading(false);
     }
   }
   function startDemo() {
     setDemo(true);
-    setLedger(demoLedger());
+    const data = demoLedger(bookId);
+    demoBooks.current = { [bookId]: data };
+    setLedger(data);
     setLastSync("");
     setError("");
   }
   async function logout() {
     try {
       if (!demo) await api("logout", { method: "POST" });
+      ++requestGeneration.current;
       setDemo(false);
       setSession((s) => ({ ...s!, user: null }));
       setLedger(null);
@@ -271,6 +284,22 @@ function App() {
   function navigate(id: string) {
     setView(id);
     setMobileNav(false);
+  }
+  function switchBook(id: BookId) {
+    if (id === bookId || saving || form || voidTarget) return;
+    ++requestGeneration.current;
+    if (demo && ledger) demoBooks.current[bookId] = ledger;
+    setBookId(id);
+    setLedger(demo ? (demoBooks.current[id] ||= demoLedger(id)) : null);
+    setLoading(!demo);
+    setLastSync("");
+    setError("");
+    setToast("");
+    setQuery("");
+    setCategory("");
+    setTypeFilter("all");
+    setStatusFilter("active");
+    setPage(1);
   }
   function openForm(t?: Transaction) {
     setEditing(t || null);
@@ -285,7 +314,7 @@ function App() {
             party: t.party,
             note: t.note,
           }
-        : { ...emptyForm, date: today() },
+        : { ...emptyForm, date: today(), category: expenseCategories[0] },
     );
     setFormError("");
     eventId.current = crypto.randomUUID();
@@ -327,6 +356,7 @@ function App() {
         : await api<Ledger>("transactions", {
             method: "POST",
             body: JSON.stringify({
+              ledgerId: bookId,
               eventId: eventId.current,
               action: editing ? "edit" : "create",
               transaction,
@@ -389,6 +419,7 @@ function App() {
         : await api<Ledger>("transactions", {
             method: "POST",
             body: JSON.stringify({
+              ledgerId: bookId,
               eventId: eventId.current,
               action: "void",
               transaction,
@@ -451,7 +482,7 @@ function App() {
       ...filtered.map((t) => [
         t.id,
         t.date,
-        t.type === "income" ? "收入" : "支出",
+        typeLabel(t.type),
         t.category,
         t.description,
         (t.amountCents / 100).toFixed(2),
@@ -468,7 +499,7 @@ function App() {
     );
     const a = document.createElement("a");
     a.href = url;
-    a.download = `中华账簿_${period.start}_${period.end}.csv`;
+    a.download = `${selectedBook.name}_${period.start}_${period.end}.csv`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
@@ -521,7 +552,7 @@ function App() {
             </button>
           </div>
           <div className="sidebar-school">
-            文林望中华学校<span>教师联谊会 · 财务管理</span>
+            文林望中华学校<span>三个账本 · 一个财务工作空间</span>
           </div>
           <span className="nav-caption">工作空间</span>
           <nav>
@@ -576,7 +607,7 @@ function App() {
               >
                 <Menu />
               </button>
-              <span>教师联谊会</span>
+              <span>{selectedBook.name}</span>
               <ChevronRight size={14} />
               <strong>{title}</strong>
             </div>
@@ -606,6 +637,24 @@ function App() {
             </div>
           </header>
           <div className="workspace-body">
+            <div className="book-switcher" aria-label="选择账本">
+              {(Object.keys(books) as BookId[]).map((id, i) => (
+                <button
+                  key={id}
+                  className={"book-choice " + (bookId === id ? "selected" : "")}
+                  aria-pressed={bookId === id}
+                  disabled={saving || !!form || !!voidTarget}
+                  onClick={() => switchBook(id)}
+                >
+                  <span className="book-number">0{i + 1}</span>
+                  <span>
+                    <strong>{books[id].name}</strong>
+                    <small>{books[id].caption}</small>
+                  </span>
+                  {bookId === id && <CheckCircle2 size={18} />}
+                </button>
+              ))}
+            </div>
             {demo && (
               <div className="demo-banner">
                 <Eye size={16} />
@@ -619,7 +668,7 @@ function App() {
             )}
             <div className="page-heading">
               <div>
-                <div className="eyebrow">CHUNG HWA TEACHERS’ ASSOCIATION</div>
+                <div className="eyebrow">{selectedBook.english}</div>
                 <h1>
                   {title}
                   <span className="heading-dot">.</span>
@@ -668,6 +717,27 @@ function App() {
                 <AlertCircle size={18} />
                 {error}
                 <button onClick={() => void refresh()}>重试</button>
+              </div>
+            )}
+            {ledger && !!ledger.reviewNotes?.length && (
+              <details className="review-notes">
+                <summary>
+                  <AlertCircle size={17} />
+                  历史资料待核对 · {ledger.reviewNotes.length} 项
+                </summary>
+                <ul>
+                  {ledger.reviewNotes.map((note, i) => (
+                    <li key={i}>{note}</li>
+                  ))}
+                </ul>
+                <p>报表会保留这些说明；可在账目明细中修改已确认的记录。</p>
+              </details>
+            )}
+            {!!stats?.adjustment && (
+              <div className="alert">
+                本期间跨越历史结转点，另含结转核对差额 RM{" "}
+                {money(stats.adjustment)}
+                。此差额不列为收入或支出，请参阅报告说明。
               </div>
             )}
             {!ledger ? (
@@ -913,6 +983,7 @@ function App() {
                         <option value="all">全部收支</option>
                         <option value="income">收入</option>
                         <option value="expense">支出</option>
+                        <option value="transfer">账户转账</option>
                       </select>
                       <select
                         aria-label="账目分类"
@@ -921,8 +992,15 @@ function App() {
                       >
                         <option value="">全部分类</option>
                         {[
-                          ...(typeFilter !== "expense" ? incomeCategories : []),
-                          ...(typeFilter !== "income" ? expenseCategories : []),
+                          ...(typeFilter === "all" || typeFilter === "income"
+                            ? incomeCategories
+                            : []),
+                          ...(typeFilter === "all" || typeFilter === "expense"
+                            ? expenseCategories
+                            : []),
+                          ...(typeFilter === "all" || typeFilter === "transfer"
+                            ? ["账户内部转账"]
+                            : []),
                         ].map((c) => (
                           <option key={c}>{c}</option>
                         ))}
@@ -1009,7 +1087,10 @@ function App() {
                     <div className="report-actions">
                       <div>
                         <ShieldCheck size={18} />
-                        <span>期初 + 收入 − 支出 = 期末结余</span>
+                        <span>
+                          期初 + 收入 − 支出
+                          {stats.adjustment ? " + 结转核对差额" : ""} = 期末结余
+                        </span>
                       </div>
                       <button
                         className="primary"
@@ -1059,9 +1140,7 @@ function App() {
                                           ? "作废了"
                                           : "导入了"}
                                     一笔
-                                    {e.transaction.type === "income"
-                                      ? "收入"
-                                      : "支出"}
+                                    {typeLabel(e.transaction.type)}
                                   </span>
                                 </strong>
                                 <p>
@@ -1103,7 +1182,7 @@ function App() {
                         <div>
                           <h3>文林望中华学校</h3>
                           <p>SJK(C) CHUNG HWA BELEMANG</p>
-                          <span>教师联谊会</span>
+                          <span>{selectedBook.name}</span>
                         </div>
                       </div>
                       <dl>
@@ -1188,7 +1267,7 @@ function App() {
               </>
             )}
             <footer className="app-footer">
-              <span>文林望中华学校 · 教师联谊会</span>
+              <span>文林望中华学校 · {selectedBook.name}</span>
               <span>
                 CHUNG HWA LEDGER <i /> {demo ? "演示空间" : "财务工作空间"}
               </span>
@@ -1204,37 +1283,46 @@ function App() {
       )}
       {form && (
         <Modal
-          title={editing ? "修改账目" : "记一笔"}
+          title={`${selectedBook.name} · ${editing ? "修改账目" : "记一笔"}`}
           onClose={closeForm}
           busy={saving}
         >
           <form onSubmit={submit}>
             <div className="type-toggle">
-              {(["income", "expense"] as TransactionType[]).map((t) => (
-                <button
-                  type="button"
-                  key={t}
-                  className={form.type === t ? "selected " + t : ""}
-                  onClick={() =>
-                    setForm({
-                      ...form,
-                      type: t,
-                      category:
-                        t === "income"
-                          ? incomeCategories[0]
-                          : expenseCategories[0],
-                    })
-                  }
-                >
-                  {t === "income" ? (
-                    <ArrowDownLeft size={18} />
-                  ) : (
-                    <ArrowUpRight size={18} />
-                  )}{" "}
-                  {t === "income" ? "收入" : "支出"}
-                </button>
-              ))}
+              {(["income", "expense", "transfer"] as TransactionType[]).map(
+                (t) => (
+                  <button
+                    type="button"
+                    key={t}
+                    className={form.type === t ? "selected " + t : ""}
+                    onClick={() =>
+                      setForm({
+                        ...form,
+                        type: t,
+                        category:
+                          t === "transfer"
+                            ? "账户内部转账"
+                            : t === "income"
+                              ? incomeCategories[0]
+                              : expenseCategories[0],
+                      })
+                    }
+                  >
+                    {t === "income" ? (
+                      <ArrowDownLeft size={18} />
+                    ) : (
+                      <ArrowUpRight size={18} />
+                    )}{" "}
+                    {typeLabel(t)}
+                  </button>
+                ),
+              )}
             </div>
+            {form.type === "transfer" && (
+              <p className="muted">
+                用于同一账本内的现金与银行账户互转，不计入收入、支出或总余额。请在备注写明转出与转入账户。
+              </p>
+            )}
             <div className="amount-input">
               <label htmlFor="amount">金额</label>
               <div>
@@ -1268,9 +1356,11 @@ function App() {
                     setForm({ ...form, category: e.target.value })
                   }
                 >
-                  {(form.type === "income"
-                    ? incomeCategories
-                    : expenseCategories
+                  {(form.type === "transfer"
+                    ? ["账户内部转账"]
+                    : form.type === "income"
+                      ? incomeCategories
+                      : expenseCategories
                   ).map((c) => (
                     <option key={c}>{c}</option>
                   ))}
@@ -1433,13 +1523,13 @@ function Login({
           </div>
         </div>
         <div className="login-title">
-          <span className="eyebrow">TEACHERS’ ASSOCIATION</span>
+          <span className="eyebrow">CHUNG HWA · SCHOOL FINANCE</span>
           <h1>
             一笔一记，
             <br />
             共守一份信任<span>。</span>
           </h1>
-          <p>教师联谊会 · 财务工作空间</p>
+          <p>教师联谊会 · 家协 · 贩卖部</p>
           <div className="login-rule" />
           <div className="login-feature">
             <BookOpen size={21} />
@@ -1756,7 +1846,7 @@ function TransactionTable({
               <td className="date-cell">{t.date.replaceAll("-", ".")}</td>
               <td>
                 <span className={"type-badge " + t.type}>
-                  {t.type === "income" ? "收入" : "支出"}
+                  {typeLabel(t.type)}
                 </span>
               </td>
               <td
@@ -1765,7 +1855,8 @@ function TransactionTable({
                   (t.type === "income" ? "income-text" : "")
                 }
               >
-                {t.type === "income" ? "+" : "−"} {money(t.amountCents)}
+                {t.type === "transfer" ? "↔" : t.type === "income" ? "+" : "−"}{" "}
+                {money(t.amountCents)}
               </td>
               <td className="action-column">
                 {canWrite && t.status === "active" ? (
@@ -1838,7 +1929,10 @@ function Report({
         <div>
           <h2>文林望中华学校</h2>
           <p>SJK(C) CHUNG HWA BELEMANG</p>
-          <h3>教师联谊会{filtered ? "账目查询结果" : "财政报告"}</h3>
+          <h3>
+            {bookFor(ledger.id).name}
+            {filtered ? "账目查询结果" : "财政报告"}
+          </h3>
         </div>
       </div>
       <div className="report-period">
@@ -1884,6 +1978,29 @@ function Report({
         )}
       </div>
       <h4>收支明细</h4>
+      {!!ledger.reviewNotes?.length && (
+        <div className="report-review">
+          <strong>历史资料待核对</strong>
+          <ul>
+            {ledger.reviewNotes.map((note, i) => (
+              <li key={i}>{note}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {!!s.adjustment && !filtered && (
+        <p className="report-note">
+          本期结转核对差额：RM {money(s.adjustment)}（独立列示，不计入收支）。
+        </p>
+      )}
+      {!!ledger.balanceCheckpoints?.length && !filtered && (
+        <p className="report-note">
+          结转依据：
+          {ledger.balanceCheckpoints
+            .map((p) => `${p.date} 期初 RM ${money(p.amountCents)}；${p.note}`)
+            .join("。")}
+        </p>
+      )}
       <table className="report-table">
         <thead>
           <tr>
@@ -1900,6 +2017,9 @@ function Report({
                 <td>{t.date}</td>
                 <td>
                   {t.description}
+                  {t.type === "transfer"
+                    ? `（账户转账 RM ${money(t.amountCents)}，不计收支）`
+                    : ""}
                   {t.status === "void" ? "（已作废）" : ""}
                   <small>
                     {t.category}
@@ -1945,7 +2065,11 @@ function Report({
           </div>
           <div className="report-equation">
             期初 RM {money(s.opening)} ＋ 收入 RM {money(s.income)} − 支出 RM{" "}
-            {money(s.expense)} ＝ <b>结余 RM {money(s.closing)}</b>
+            {money(s.expense)}
+            {s.adjustment
+              ? ` ＋ 结转核对差额 RM ${money(s.adjustment)}`
+              : ""}{" "}
+            ＝ <b>结余 RM {money(s.closing)}</b>
           </div>
           <div className="report-signatures">
             {["财政", "主席", "查账员"].map((x) => (
@@ -1959,7 +2083,8 @@ function Report({
       )}
       <footer>
         <span>
-          文林望中华学校教师联谊会{demo ? " · 虚构数据，仅供演示" : ""}
+          文林望中华学校 · {bookFor(ledger.id).name}
+          {demo ? " · 虚构数据，仅供演示" : ""}
         </span>
         <span>生成日期：{today()}</span>
       </footer>

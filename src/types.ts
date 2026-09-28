@@ -1,4 +1,6 @@
-export type TransactionType = "income" | "expense";
+export type TransactionType = "income" | "expense" | "transfer";
+export const typeLabel = (type: TransactionType) =>
+  ({ income: "收入", expense: "支出", transfer: "账户转账" })[type];
 export type Transaction = {
   id: string;
   date: string;
@@ -23,6 +25,9 @@ export type LedgerEvent = {
   actor: string;
 };
 export type Ledger = {
+  id?: string;
+  reviewNotes?: string[];
+  balanceCheckpoints?: { date: string; amountCents: number; note: string }[];
   transactions: Transaction[];
   events: LedgerEvent[];
   openingDate: string;
