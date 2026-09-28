@@ -6,6 +6,8 @@ The interface uses midnight navy, cobalt, cyan, violet and icy silver. The user 
 
 The active screen theme now uses the darker `src/night.css`: a navy canvas, layered translucent blue cards, thin cyan and violet edge lights, and bright values with restrained secondary text. It addresses the user's feedback that the previous page was too white and lacked impact. Login uses a dark blue form while mobile keeps all fields in one card. Ledger tabs, filters, totals, tables, reports and record forms share the theme; PDF and print keep their white document surface. The existing ImageGen blue book and optional HyperFrames loop remain the only decorative media, so the new effect adds no network wait on mobile. Color changes never change financial values or Google Sheets data.
 
+`src/login-refine.css` centers and enlarges the official crest and school name above the sign-in card. It blends the existing blue book artwork into the left panel and keeps the mobile form compact. No promotional text was added.
+
 Annual and half-year reports use `src/report-print.css` for dense A4 printing. Every active transaction, category totals, the balance equation and signature lines remain; lengthy source-review notes are shortened to a marked count on paper and stay complete in the app. PDF checks against live ledger content: Teachers 2024 (60 entries, 2 pages), Teachers 2025 (58, 2), PTA 2024 (37, 2), Store 2025 (30, 1), Teachers 2024 H1 (23, 1). Extracted PDF date counts matched every source entry.
 
 ## ImageGen assets

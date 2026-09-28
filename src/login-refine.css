@@ -1,0 +1,225 @@
+/* The school identity leads the sign-in screen; the form stays compact. */
+@media screen {
+  .login-page {
+    overflow-x: hidden;
+    padding: 22px 20px;
+    background:
+      radial-gradient(ellipse 48% 35% at 50% -13%, #326fca85, transparent 77%),
+      radial-gradient(ellipse 43% 50% at -9% 74%, #07568366, transparent 78%),
+      radial-gradient(ellipse 43% 50% at 111% 85%, #563aab69, transparent 78%),
+      linear-gradient(150deg, #050b19, #0b1730 53%, #080f20);
+  }
+
+  .login-page::before {
+    background-image:
+      linear-gradient(#86bbff0c 1px, transparent 1px),
+      linear-gradient(90deg, #86bbff0c 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: linear-gradient(to bottom, #000 0%, #0009 70%, transparent);
+  }
+
+  .login-page::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    top: -255px;
+    left: 50%;
+    width: min(900px, 120vw);
+    aspect-ratio: 1;
+    transform: translateX(-50%);
+    border: 1px solid #4a96e91f;
+    border-radius: 50%;
+    box-shadow: 0 0 0 90px #328bfa08, 0 0 0 190px #328bfa05;
+    pointer-events: none;
+  }
+
+  .login-school {
+    width: min(900px, 100%);
+    flex-direction: column;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 21px;
+    text-align: center;
+  }
+
+  .login-school img {
+    width: 70px;
+    height: 70px;
+    flex: none;
+    border: 3px solid #f6fbff;
+    box-shadow:
+      0 0 0 1px #91cfffab,
+      0 0 0 9px #459cf50d,
+      0 12px 38px #267fff63;
+  }
+
+  .login-school div {
+    color: #f5f9ff;
+    font-size: 26px;
+    font-weight: 720;
+    line-height: 1.28;
+    letter-spacing: 1.6px;
+    text-shadow: 0 3px 22px #68b7ff52;
+  }
+
+  .login-school::after {
+    content: "";
+    width: 70px;
+    height: 2px;
+    margin-top: 2px;
+    border-radius: 5px;
+    background: linear-gradient(90deg, transparent, #52c9ff, #8f83ff, transparent);
+    box-shadow: 0 0 17px #5bbcff80;
+  }
+
+  .login-card {
+    width: min(900px, 100%);
+    min-height: 470px;
+    border: 1px solid #79a9f176;
+    border-radius: 28px;
+    background: #101c35;
+    box-shadow:
+      inset 0 1px 0 #e5f4ff3d,
+      0 30px 100px #020615c4,
+      0 0 65px #286bea2e;
+  }
+
+  .login-art {
+    background:
+      radial-gradient(circle at 50% 46%, #12468b5e, transparent 58%),
+      linear-gradient(165deg, #07172f, #061127);
+  }
+
+  .login-art::after {
+    border-color: #68b5ff30;
+  }
+
+  .brand-motion {
+    width: 91%;
+    margin: 0 auto;
+    filter: drop-shadow(0 0 22px #258cff40);
+  }
+
+  .brand-motion video,
+  .brand-motion img {
+    mask-image: radial-gradient(ellipse 70% 72% at center, #000 53%, transparent 100%);
+  }
+
+  .login-art-caption {
+    bottom: 36px;
+  }
+
+  .login-form-area {
+    padding: 39px 51px;
+    background:
+      radial-gradient(ellipse 85% 77% at 100% 0%, #3457a459, transparent 76%),
+      linear-gradient(145deg, #142545, #0e1a32);
+  }
+
+  .login-heading {
+    margin-bottom: 29px;
+  }
+
+  .login-heading h1 {
+    font-size: 27px;
+    letter-spacing: 1px;
+  }
+
+  .login-form input {
+    height: 54px;
+    border-radius: 12px;
+    box-shadow: inset 0 1px 2px #02081945;
+  }
+
+  .login-submit {
+    height: 54px;
+    border-radius: 12px;
+    box-shadow:
+      inset 0 1px 0 #e0f7ff8a,
+      0 11px 30px #167bfa4a;
+  }
+
+  .demo-button {
+    border-color: #55719954;
+  }
+}
+
+@media screen and (max-width: 999px) {
+  .login-card {
+    width: min(460px, 100%);
+    min-height: auto;
+  }
+
+  .login-school {
+    width: min(460px, 100%);
+  }
+}
+
+@media screen and (max-width: 760px) {
+  .login-page {
+    justify-content: center;
+    padding: max(25px, env(safe-area-inset-top)) 18px 28px;
+  }
+
+  .login-school {
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .login-school img {
+    width: 76px;
+    height: 76px;
+  }
+
+  .login-school div {
+    font-size: clamp(22px, 6vw, 26px);
+    letter-spacing: 1px;
+  }
+
+  .login-card {
+    border-radius: 24px;
+    box-shadow:
+      inset 0 1px 0 #e5f4ff3d,
+      0 24px 65px #020615b8,
+      0 0 43px #236ff13b;
+  }
+
+  .login-form-area {
+    padding: 28px 24px 26px;
+  }
+
+  .login-heading {
+    justify-content: center;
+    margin-bottom: 27px;
+  }
+
+  .login-heading h1 {
+    font-size: 26px;
+  }
+}
+
+@media screen and (max-width: 370px) {
+  .login-page {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+
+  .login-school img {
+    width: 68px;
+    height: 68px;
+  }
+
+  .login-school div {
+    font-size: 22px;
+  }
+
+  .login-form-area {
+    padding: 25px 20px 23px;
+  }
+}
+
+@media screen and (max-height: 700px) and (max-width: 760px) {
+  .login-page {
+    justify-content: flex-start;
+  }
+}
