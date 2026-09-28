@@ -231,6 +231,25 @@ function App() {
     }
   }, [session?.user, demo, bookId]);
   useEffect(() => {
+    if (!session?.user || demo) return;
+    let timer: number | undefined;
+    const onReturn = () => {
+      if (document.visibilityState !== "visible") return;
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        if (!loading && !saving && !bookCache.current.fresh(bookId))
+          void refresh();
+      }, 250);
+    };
+    window.addEventListener("focus", onReturn);
+    document.addEventListener("visibilitychange", onReturn);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("focus", onReturn);
+      document.removeEventListener("visibilitychange", onReturn);
+    };
+  }, [session?.user, demo, bookId, loading, saving]);
+  useEffect(() => {
     if (!toast) return;
     const t = setTimeout(() => setToast(""), 4500);
     return () => clearTimeout(t);
