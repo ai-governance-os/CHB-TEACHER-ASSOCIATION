@@ -29,8 +29,8 @@ export function BrandMotion() {
       {play ? (
         <video
           ref={video}
-          src="/brand-motion.mp4"
-          poster="/icons/brand-poster.webp"
+          src="/brand-motion-blue.mp4"
+          poster="/icons/brand-poster-blue.webp"
           autoPlay
           muted
           loop
@@ -40,10 +40,10 @@ export function BrandMotion() {
         />
       ) : (
         <img
-          src="/icons/brand-poster.webp"
+          src="/icons/brand-poster-blue.webp"
           width="480"
           height="480"
-          alt="金色书页，汇聚三个账本"
+          alt="中华账簿蓝白书页图标"
         />
       )}
       {play && (

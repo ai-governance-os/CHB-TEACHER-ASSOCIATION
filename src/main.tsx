@@ -5,7 +5,6 @@ import App from "./App";
 import "./style.css";
 import "./readability.css";
 import "./books.css";
-import "./editorial-font.css";
 import "./premium.css";
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

@@ -66,12 +66,12 @@ const navigation = [
   { id: "settings", label: "账本设置", icon: Settings },
 ];
 const palette = [
-  "#a0443e",
-  "#b4925b",
-  "#434147",
-  "#87968c",
-  "#b7a797",
-  "#d9cec0",
+  "#2563eb",
+  "#06b6d4",
+  "#7c5ce7",
+  "#13366d",
+  "#799aed",
+  "#bcccf0",
 ];
 const emptyForm = {
   date: today(),
@@ -157,7 +157,6 @@ function Modal({
       >
         <header>
           <div>
-            <span className="eyebrow">CHUNG HWA · LEDGER</span>
             <h2>{title}</h2>
           </div>
           <button
@@ -557,15 +556,13 @@ function App() {
         <aside className={"sidebar " + (mobileNav ? "open" : "")}>
           <div className="brand">
             <img
-              src="/icons/icon-192.png"
+              src="/icons/icon-blue-192.png"
               alt="中华账簿"
               width="48"
               height="48"
             />
             <div>
-              <strong>
-                中华账簿<span>CHUNG HWA LEDGER</span>
-              </strong>
+              <strong>中华账簿</strong>
             </div>
             <button
               className="icon-button mobile-close"
@@ -575,10 +572,7 @@ function App() {
               <X />
             </button>
           </div>
-          <div className="sidebar-school">
-            文林望中华学校<span>三个账本 · 一个财务工作空间</span>
-          </div>
-          <span className="nav-caption">工作空间</span>
+          <div className="sidebar-school">文林望中华学校</div>
           <nav>
             {navigation.map((n) => (
               <button
@@ -593,15 +587,6 @@ function App() {
             ))}
           </nav>
           <div className="sidebar-bottom">
-            <div className="school-note">
-              <ShieldCheck size={23} />
-              <p>
-                每一笔，都有记录
-                <span>
-                  {demo ? "演示空间 · 虚构数据" : "Google Sheets 私有账本"}
-                </span>
-              </p>
-            </div>
             <button className="user-card" onClick={logout} title="退出登录">
               <span className="avatar">{user.displayName.slice(0, 1)}</span>
               <span>
@@ -673,7 +658,6 @@ function App() {
                   <span className="book-number">0{i + 1}</span>
                   <span>
                     <strong>{books[id].name}</strong>
-                    <small>{books[id].caption}</small>
                   </span>
                   {bookId === id && <CheckCircle2 size={18} />}
                 </button>
@@ -692,22 +676,7 @@ function App() {
             )}
             <div className="page-heading">
               <div>
-                <div className="eyebrow">{selectedBook.english}</div>
-                <h1>
-                  {title}
-                  <span className="heading-dot">.</span>
-                </h1>
-                <p>
-                  {view === "overview"
-                    ? "收支有序，心中有数。"
-                    : view === "ledger"
-                      ? "每一笔收支，清晰可查。"
-                      : view === "reports"
-                        ? "把日常记录，整理成一份清晰的报告。"
-                        : view === "activity"
-                          ? "查看账目的新增、修改与作废记录。"
-                          : "管理账本资料与使用权限。"}
-                </p>
+                <h1>{title}</h1>
               </div>
               <div className="heading-actions">
                 {(view === "overview" || view === "ledger") && (
@@ -1292,9 +1261,7 @@ function App() {
             )}
             <footer className="app-footer">
               <span>文林望中华学校 · {selectedBook.name}</span>
-              <span>
-                CHUNG HWA LEDGER <i /> {demo ? "演示空间" : "财务工作空间"}
-              </span>
+              <span>{demo ? "演示模式" : "财政管理"}</span>
             </footer>
           </div>
         </main>
@@ -1548,138 +1515,113 @@ function Login({
   }
   return (
     <div className="login-page">
-      <section className="login-brand">
-        <div className="login-brand-top">
-          <img src="/school-logo.jpg" alt="文林望中华学校校徽" />
-          <div>
-            文林望中华学校<span>SJK(C) CHUNG HWA BELEMANG</span>
-          </div>
-        </div>
-        <div className="login-title">
-          <span className="eyebrow">CHUNG HWA · SCHOOL FINANCE</span>
-          <h1>
-            账有章法，
-            <br />
-            心有中华<span>。</span>
-          </h1>
-          <p>让每一份托付，都清晰有据。</p>
+      <header className="login-school">
+        <img src="/school-logo.jpg" alt="文林望中华学校校徽" />
+        <div>文林望中华学校</div>
+      </header>
+      <div className="login-card">
+        <section className="login-art" aria-label="中华账簿">
           <BrandMotion />
-          <div className="login-rule" />
-          <div className="login-feature">
-            <BookOpen size={21} />
-            <span>日常记账</span>
-            <Search size={21} />
-            <span>随时查阅</span>
-            <FileText size={21} />
-            <span>财政报告</span>
-          </div>
-        </div>
-        <div className="login-footer">
-          <span>01 联谊会　02 家协　03 贩卖部</span>
-          <span>文林望 · 柔佛</span>
-        </div>
-      </section>
-      <section className="login-form-area">
-        <div className="login-form">
-          <img
-            className="login-app-icon"
-            src="/icons/icon-192.png"
-            alt="中华账簿 App 图标"
-            width="64"
-            height="64"
-          />
-          <span className="eyebrow login-overline">YOUR FINANCE WORKSPACE</span>
-          <h2>
-            欢迎回来<span>。</span>
-          </h2>
-          <p>使用财政账户，进入学校专属工作空间。</p>
-          {connectionError && (
-            <div className="alert" role="alert">
-              {connectionError}{" "}
-              <button type="button" onClick={() => location.reload()}>
-                重新连接
-              </button>
+          <div className="login-art-caption">
+            <strong>中华账簿</strong>
+            <div className="login-books">
+              <span>教师联谊会</span>
+              <span>家协</span>
+              <span>贩卖部</span>
             </div>
-          )}
-          {configured ? (
-            <form onSubmit={login}>
-              <label>
-                账户
-                <input
-                  required
-                  autoComplete="username"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="输入账户名称"
-                />
-              </label>
-              <label>
-                密码
-                <input
-                  required
-                  autoComplete="current-password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="输入登录密码"
-                />
-              </label>
-              {error && (
-                <div className="alert" role="alert">
-                  {error}
-                </div>
-              )}
-              <button
-                className="primary login-submit"
-                disabled={busy || checking}
-              >
-                {busy || checking ? (
-                  <>
-                    <LoaderCircle className="spin" size={18} />
-                    {busy ? "正在安全登录…" : "正在连接…"}
-                  </>
-                ) : (
-                  <>
-                    登录账本 <ArrowRight size={18} />
-                  </>
-                )}
-              </button>
-              <p className="login-progress" role="status">
-                {busy
-                  ? "正在验证账户并读取账本，请稍候。"
-                  : "登录状态会保留 12 小时"}
-              </p>
-            </form>
-          ) : (
-            <div className="setup-notice">
-              <AlertCircle size={20} />
-              <div>
-                <strong>正式账本尚未连接</strong>
-                <p>
-                  管理员完成 Google Sheets
-                  连接后即可登录。目前可先体验完整的演示账本。
-                </p>
+          </div>
+        </section>
+        <section className="login-form-area">
+          <div className="login-form">
+            <div className="login-heading">
+              <img
+                className="login-app-icon"
+                src="/icons/icon-blue-192.png"
+                alt="中华账簿 App 图标"
+                width="64"
+                height="64"
+              />
+              <h1>财政管理</h1>
+            </div>
+            {connectionError && (
+              <div className="alert" role="alert">
+                {connectionError}{" "}
+                <button type="button" onClick={() => location.reload()}>
+                  重新连接
+                </button>
               </div>
-            </div>
-          )}
-          <div className="login-divider">
-            <span>先看看操作方式</span>
+            )}
+            {configured ? (
+              <form onSubmit={login}>
+                <label>
+                  账户
+                  <input
+                    required
+                    autoComplete="username"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="输入账户名称"
+                  />
+                </label>
+                <label>
+                  密码
+                  <input
+                    required
+                    autoComplete="current-password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="输入登录密码"
+                  />
+                </label>
+                {error && (
+                  <div className="alert" role="alert">
+                    {error}
+                  </div>
+                )}
+                <button
+                  className="primary login-submit"
+                  disabled={busy || checking}
+                >
+                  {busy || checking ? (
+                    <>
+                      <LoaderCircle className="spin" size={18} />
+                      {busy ? "正在安全登录…" : "正在连接…"}
+                    </>
+                  ) : (
+                    <>
+                      登录 <ArrowRight size={18} />
+                    </>
+                  )}
+                </button>
+                <p className="login-progress" role="status">
+                  {busy ? "正在读取账本…" : "12 小时内保持登录"}
+                </p>
+              </form>
+            ) : (
+              <div className="setup-notice">
+                <AlertCircle size={20} />
+                <div>
+                  <strong>正式账本尚未连接</strong>
+                  <p>
+                    管理员完成 Google Sheets
+                    连接后即可登录。目前可先体验完整的演示账本。
+                  </p>
+                </div>
+              </div>
+            )}
+            <button
+              className="secondary demo-button"
+              disabled={busy}
+              onClick={onDemo}
+            >
+              <Eye size={18} />
+              演示账本
+              <ArrowRight size={16} />
+            </button>
           </div>
-          <button
-            className="secondary demo-button"
-            disabled={busy}
-            onClick={onDemo}
-          >
-            <Eye size={18} />
-            体验演示账本
-            <ArrowRight size={16} />
-          </button>
-          <small className="login-privacy">
-            <ShieldCheck size={14} />
-            学校账目仅限获授权人员查阅
-          </small>
-        </div>
-      </section>
+        </section>
+      </div>
     </div>
   );
 }
@@ -1745,14 +1687,14 @@ function TrendChart({ ledger, year }: { ledger: Ledger; year: number }) {
                 y1={y}
                 x2="728"
                 y2={y}
-                stroke="#e8dfd4"
+                stroke="#e6ecf6"
                 strokeDasharray={i ? "3 5" : "0"}
               />
               <text
                 x="34"
                 y={y + 4}
                 textAnchor="end"
-                fill="#998575"
+                fill="#73829b"
                 fontSize="11"
               >
                 {((ceiling * i) / 4 / 100).toLocaleString()}
@@ -1768,7 +1710,7 @@ function TrendChart({ ledger, year }: { ledger: Ledger; year: number }) {
               width="13"
               height={Math.max(0, (v.income / ceiling) * 168)}
               rx="3"
-              fill="#b59661"
+              fill="#2563eb"
             >
               <title>
                 {v.month}月收入 RM {money(v.income)}
@@ -1780,7 +1722,7 @@ function TrendChart({ ledger, year }: { ledger: Ledger; year: number }) {
               width="13"
               height={Math.max(0, (v.expense / ceiling) * 168)}
               rx="3"
-              fill="#5b4646"
+              fill="#8aacef"
             >
               <title>
                 {v.month}月支出 RM {money(v.expense)}
@@ -1790,7 +1732,7 @@ function TrendChart({ ledger, year }: { ledger: Ledger; year: number }) {
               x={73 + i * 56}
               y="217"
               textAnchor="middle"
-              fill="#8c7766"
+              fill="#73829b"
               fontSize="12"
             >
               {v.month}月

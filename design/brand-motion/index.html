@@ -2,19 +2,19 @@
 <html lang="en"><head><meta charset="utf-8">
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
 <style>
-*{box-sizing:border-box;margin:0}html,body{width:480px;height:480px;overflow:hidden;background:#2a2326}
-#root{width:100%;height:100%;position:relative;background:#2a2326;display:grid;place-items:center}
+*{box-sizing:border-box;margin:0}html,body{width:480px;height:480px;overflow:hidden;background:#071630}
+#root{width:100%;height:100%;position:relative;background:#071630;display:grid;place-items:center}
 .scene{position:absolute;inset:0;display:grid;place-items:center}
-.rings{position:absolute;inset:35px;border:1px solid #b6986538;border-radius:50%}
-.rings:before,.rings:after{content:'';position:absolute;border:1px solid #b6986528;border-radius:50%;inset:22px}
-.rings:after{inset:44px;border-color:#b698651c}
-.tile{position:relative;width:282px;height:282px;border-radius:55px;overflow:hidden;border:1px solid #e9c99455;box-shadow:0 26px 45px #16090e66}
+.rings{position:absolute;inset:35px;border:1px solid #4299f04a;border-radius:50%}
+.rings:before,.rings:after{content:'';position:absolute;border:1px solid #4299f02e;border-radius:50%;inset:22px}
+.rings:after{inset:44px;border-color:#4299f022}
+.tile{position:relative;width:282px;height:282px;border-radius:55px;overflow:hidden;border:1px solid #71caff77;box-shadow:0 26px 45px #020a2066}
 .tile img{width:100%;height:100%;display:block}
-.point{position:absolute;width:7px;height:7px;background:#c9a76b;border-radius:50%;top:-3px;left:50%}
+.point{position:absolute;width:7px;height:7px;background:#75dfff;border-radius:50%;top:-3px;left:50%;box-shadow:0 0 13px #37a7ff}
 </style></head><body>
 <div data-hf-id="hf-3zkm" id="root" data-composition-id="brand" data-width="480" data-height="480" data-duration="6" data-fps="24">
-<div data-hf-id="hf-lqwl" id="gold-rings" class="rings clip" data-start="0" data-duration="6" data-track-index="0"><span data-hf-id="hf-0325" class="point"></span></div>
-<img data-hf-id="hf-p3k2" id="gold-book" class="tile clip" data-start="0" data-duration="6" data-track-index="1" src="assets/brand-book.webp" alt="Gold open book">
+<div data-hf-id="hf-lqwl" id="blue-rings" class="rings clip" data-start="0" data-duration="6" data-track-index="0"><span data-hf-id="hf-0325" class="point"></span></div>
+<img data-hf-id="hf-p3k2" id="blue-book" class="tile clip" data-start="0" data-duration="6" data-track-index="1" src="assets/brand-book-blue.webp" alt="Blue silver open book">
 </div>
 <script>
 // Adapted from HyperFrames drift-hold: one exact, finite ambient loop.
