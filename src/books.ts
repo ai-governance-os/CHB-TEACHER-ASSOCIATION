@@ -1,4 +1,4 @@
-import { incomeCategories, expenseCategories } from "./types";
+import { incomeCategories, expenseCategories } from "./types.js";
 export const books = {
   teachers: {
     name: "教师联谊会",
