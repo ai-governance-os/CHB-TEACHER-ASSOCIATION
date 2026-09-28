@@ -32,7 +32,6 @@ import {
   Trash2,
   Pencil,
   ExternalLink,
-  LockKeyhole,
 } from "lucide-react";
 import type {
   Ledger,
@@ -56,6 +55,8 @@ import {
 } from "./ledger";
 import { demoLedger } from "./demo";
 import { api } from "./api";
+import { LedgerCache } from "./ledger-cache";
+import { BrandMotion } from "./BrandMotion";
 
 const navigation = [
   { id: "overview", label: "财务总览", icon: LayoutDashboard },
@@ -65,12 +66,12 @@ const navigation = [
   { id: "settings", label: "账本设置", icon: Settings },
 ];
 const palette = [
-  "#173f49",
-  "#c29a55",
-  "#73938b",
-  "#9cabb8",
-  "#bcae94",
-  "#ced9d6",
+  "#a0443e",
+  "#b4925b",
+  "#434147",
+  "#87968c",
+  "#b7a797",
+  "#d9cec0",
 ];
 const emptyForm = {
   date: today(),
@@ -82,7 +83,13 @@ const emptyForm = {
   note: "",
 };
 type FormValues = typeof emptyForm;
-type Session = { user: User | null; configured: boolean };
+type Session = { user: User | null; configured: boolean; ledger?: Ledger };
+const initialSession = api<Session>("session");
+const syncTime = (at = Date.now()) =>
+  new Date(at).toLocaleTimeString("zh-CN", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
 function Modal({
   title,
@@ -174,6 +181,7 @@ function App() {
   const { incomeCategories, expenseCategories } = selectedBook;
   const requestGeneration = useRef(0);
   const demoBooks = useRef<Partial<Record<BookId, Ledger>>>({});
+  const bookCache = useRef(new LedgerCache());
   const [session, setSession] = useState<Session | null>(null),
     [bootError, setBootError] = useState("");
   const [demo, setDemo] = useState(false),
@@ -213,12 +221,15 @@ function App() {
     : session?.user;
   const canWrite = user?.role !== "viewer";
   useEffect(() => {
-    api<Session>("session")
+    initialSession
       .then(setSession)
       .catch(() => setBootError("暂时无法连接，请刷新页面重试。"));
   }, []);
   useEffect(() => {
-    if (session?.user && !demo) void refresh();
+    if (session?.user && !demo) {
+      if (bookCache.current.fresh(bookId)) setLoading(false);
+      else void refresh();
+    }
   }, [session?.user, demo, bookId]);
   useEffect(() => {
     if (!toast) return;
@@ -247,6 +258,7 @@ function App() {
       const data = await api<Ledger>("ledger", {}, bookId);
       if (generation !== requestGeneration.current) return;
       if (data.id !== bookId) throw new Error("账本载入不一致，请重新连接");
+      bookCache.current.set(bookId, data);
       setLedger(data);
       setLastSync(
         new Date().toLocaleTimeString("zh-CN", {
@@ -273,8 +285,10 @@ function App() {
     try {
       if (!demo) await api("logout", { method: "POST" });
       ++requestGeneration.current;
+      bookCache.current.clear();
+      demoBooks.current = {};
       setDemo(false);
-      setSession((s) => ({ ...s!, user: null }));
+      setSession((s) => ({ configured: s?.configured ?? true, user: null }));
       setLedger(null);
       setView("overview");
     } catch (e) {
@@ -290,9 +304,14 @@ function App() {
     ++requestGeneration.current;
     if (demo && ledger) demoBooks.current[bookId] = ledger;
     setBookId(id);
-    setLedger(demo ? (demoBooks.current[id] ||= demoLedger(id)) : null);
-    setLoading(!demo);
-    setLastSync("");
+    const cached = bookCache.current.get(id);
+    setLedger(
+      demo
+        ? (demoBooks.current[id] ||= demoLedger(id))
+        : (cached?.ledger ?? null),
+    );
+    setLoading(!demo && !bookCache.current.fresh(id));
+    setLastSync(!demo && cached ? syncTime(cached.at) : "");
     setError("");
     setToast("");
     setQuery("");
@@ -333,6 +352,8 @@ function App() {
         throw new Error("日期必须有效，且不得早于账本启用日期");
       if (!form.description.trim()) throw new Error("请填写账目项目");
       const amountCents = parseAmount(form.amount);
+      ++requestGeneration.current;
+      setLoading(false);
       setSaving(true);
       const now = new Date().toISOString();
       const transaction: Transaction = {
@@ -363,6 +384,7 @@ function App() {
               expectedVersion: editing?.version || 0,
             }),
           });
+      if (!demo) bookCache.current.set(bookId, data);
       setLedger(data);
       setForm(null);
       setEditing(null);
@@ -404,6 +426,8 @@ function App() {
   }
   async function voidEntry() {
     if (!voidTarget || !voidReason.trim()) return;
+    ++requestGeneration.current;
+    setLoading(false);
     setSaving(true);
     setFormError("");
     try {
@@ -426,7 +450,9 @@ function App() {
               expectedVersion: voidTarget.version,
             }),
           });
+      if (!demo) bookCache.current.set(bookId, data);
       setLedger(data);
+      if (!demo) setLastSync(syncTime());
       setVoidTarget(null);
       setToast("账目已作废，原始记录仍可查询");
     } catch (e) {
@@ -503,31 +529,24 @@ function App() {
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
-  if (!session && !demo)
-    return (
-      <div className="boot">
-        <img src="/school-logo.jpg" alt="校徽" />
-        <h1>中华账簿</h1>
-        {bootError ? (
-          <>
-            <p>{bootError}</p>
-            <button className="primary" onClick={() => location.reload()}>
-              重新连接
-            </button>
-            <button className="text-button" onClick={startDemo}>
-              查看演示
-            </button>
-          </>
-        ) : (
-          <LoaderCircle className="spin" />
-        )}
-      </div>
-    );
   if (!user)
     return (
       <Login
-        configured={session?.configured || false}
-        onLogin={(s) => setSession(s)}
+        configured={session?.configured ?? true}
+        checking={!session && !bootError}
+        connectionError={bootError}
+        onLogin={(s) => {
+          ++requestGeneration.current;
+          bookCache.current.clear();
+          setBookId("teachers");
+          setError("");
+          if (s.ledger?.id === "teachers") {
+            bookCache.current.set("teachers", s.ledger);
+            setLedger(s.ledger);
+            setLastSync(syncTime());
+          }
+          setSession({ user: s.user, configured: s.configured });
+        }}
         onDemo={startDemo}
       />
     );
@@ -537,7 +556,12 @@ function App() {
       <div className="app-shell no-print">
         <aside className={"sidebar " + (mobileNav ? "open" : "")}>
           <div className="brand">
-            <img src="/school-logo.jpg" alt="文林望中华学校校徽" />
+            <img
+              src="/icons/icon-192.png"
+              alt="中华账簿"
+              width="48"
+              height="48"
+            />
             <div>
               <strong>
                 中华账簿<span>CHUNG HWA LEDGER</span>
@@ -629,7 +653,7 @@ function App() {
               <button
                 className="icon-button"
                 aria-label="刷新账本"
-                disabled={loading || demo}
+                disabled={loading || demo || saving}
                 onClick={() => void refresh()}
               >
                 <RefreshCw size={17} className={loading ? "spin" : ""} />
@@ -1485,10 +1509,14 @@ function App() {
 
 function Login({
   configured,
+  checking,
+  connectionError,
   onLogin,
   onDemo,
 }: {
   configured: boolean;
+  checking: boolean;
+  connectionError: string;
   onLogin: (s: Session) => void;
   onDemo: () => void;
 }) {
@@ -1504,7 +1532,12 @@ function Login({
       onLogin(
         await api<Session>("login", {
           method: "POST",
-          body: JSON.stringify({ username: name, password }),
+          body: JSON.stringify({
+            username: name,
+            password,
+            ledgerId: "teachers",
+            includeLedger: true,
+          }),
         }),
       );
     } catch (e) {
@@ -1525,11 +1558,12 @@ function Login({
         <div className="login-title">
           <span className="eyebrow">CHUNG HWA · SCHOOL FINANCE</span>
           <h1>
-            一笔一记，
+            账有章法，
             <br />
-            共守一份信任<span>。</span>
+            心有中华<span>。</span>
           </h1>
-          <p>教师联谊会 · 家协 · 贩卖部</p>
+          <p>让每一份托付，都清晰有据。</p>
+          <BrandMotion />
           <div className="login-rule" />
           <div className="login-feature">
             <BookOpen size={21} />
@@ -1541,16 +1575,32 @@ function Login({
           </div>
         </div>
         <div className="login-footer">
-          CHUNG HWA LEDGER <span>文林望 · 柔佛</span>
+          <span>01 联谊会　02 家协　03 贩卖部</span>
+          <span>文林望 · 柔佛</span>
         </div>
       </section>
       <section className="login-form-area">
         <div className="login-form">
-          <span className="login-icon">
-            <LockKeyhole size={25} />
-          </span>
-          <h2>欢迎回到账簿</h2>
+          <img
+            className="login-app-icon"
+            src="/icons/icon-192.png"
+            alt="中华账簿 App 图标"
+            width="64"
+            height="64"
+          />
+          <span className="eyebrow login-overline">YOUR FINANCE WORKSPACE</span>
+          <h2>
+            欢迎回来<span>。</span>
+          </h2>
           <p>使用财政账户，进入学校专属工作空间。</p>
+          {connectionError && (
+            <div className="alert" role="alert">
+              {connectionError}{" "}
+              <button type="button" onClick={() => location.reload()}>
+                重新连接
+              </button>
+            </div>
+          )}
           {configured ? (
             <form onSubmit={login}>
               <label>
@@ -1579,15 +1629,26 @@ function Login({
                   {error}
                 </div>
               )}
-              <button className="primary login-submit" disabled={busy}>
-                {busy ? (
-                  <LoaderCircle className="spin" size={18} />
+              <button
+                className="primary login-submit"
+                disabled={busy || checking}
+              >
+                {busy || checking ? (
+                  <>
+                    <LoaderCircle className="spin" size={18} />
+                    {busy ? "正在安全登录…" : "正在连接…"}
+                  </>
                 ) : (
                   <>
                     登录账本 <ArrowRight size={18} />
                   </>
                 )}
               </button>
+              <p className="login-progress" role="status">
+                {busy
+                  ? "正在验证账户并读取账本，请稍候。"
+                  : "登录状态会保留 12 小时"}
+              </p>
             </form>
           ) : (
             <div className="setup-notice">
@@ -1604,7 +1665,11 @@ function Login({
           <div className="login-divider">
             <span>先看看操作方式</span>
           </div>
-          <button className="secondary demo-button" onClick={onDemo}>
+          <button
+            className="secondary demo-button"
+            disabled={busy}
+            onClick={onDemo}
+          >
             <Eye size={18} />
             体验演示账本
             <ArrowRight size={16} />
@@ -1680,14 +1745,14 @@ function TrendChart({ ledger, year }: { ledger: Ledger; year: number }) {
                 y1={y}
                 x2="728"
                 y2={y}
-                stroke="#e7eded"
+                stroke="#e8dfd4"
                 strokeDasharray={i ? "3 5" : "0"}
               />
               <text
                 x="34"
                 y={y + 4}
                 textAnchor="end"
-                fill="#829092"
+                fill="#998575"
                 fontSize="11"
               >
                 {((ceiling * i) / 4 / 100).toLocaleString()}
@@ -1703,7 +1768,7 @@ function TrendChart({ ledger, year }: { ledger: Ledger; year: number }) {
               width="13"
               height={Math.max(0, (v.income / ceiling) * 168)}
               rx="3"
-              fill="#214852"
+              fill="#b59661"
             >
               <title>
                 {v.month}月收入 RM {money(v.income)}
@@ -1715,7 +1780,7 @@ function TrendChart({ ledger, year }: { ledger: Ledger; year: number }) {
               width="13"
               height={Math.max(0, (v.expense / ceiling) * 168)}
               rx="3"
-              fill="#c8a365"
+              fill="#5b4646"
             >
               <title>
                 {v.month}月支出 RM {money(v.expense)}
@@ -1725,7 +1790,7 @@ function TrendChart({ ledger, year }: { ledger: Ledger; year: number }) {
               x={73 + i * 56}
               y="217"
               textAnchor="middle"
-              fill="#718184"
+              fill="#8c7766"
               fontSize="12"
             >
               {v.month}月

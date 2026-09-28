@@ -1,0 +1,7 @@
+@font-face {
+  font-family: "CHB Editorial";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(/fonts/chb-editorial.ttf) format("truetype");
+}

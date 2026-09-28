@@ -9,5 +9,8 @@ gas/Secrets.js
 test-results/
 *.log
 *.tsbuildinfo
+design/brand-motion/.hyperframes/
+design/brand-motion/.thumbnails/
+design/brand-motion/snapshots/
 
 .vercel

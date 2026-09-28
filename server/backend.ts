@@ -39,11 +39,19 @@ export async function backend<T>(
               }
             : {}),
           redirect: "manual",
-          signal,
+          // A ContentService result is already computed. Retry a stalled download
+          // promptly; the slower signed execution still gets its full budget.
+          signal:
+            method === "GET"
+              ? AbortSignal.any([signal, AbortSignal.timeout(8000)])
+              : signal,
         });
         status = response.status;
         if (![301, 302, 303, 307, 308].includes(response.status)) break;
         const location = response.headers.get("location");
+        // Manual redirects must release their bodies, otherwise Node keeps the
+        // Google connections occupied until garbage collection.
+        await response.body?.cancel();
         if (!location) throw new Error("Missing Google redirect");
         const next = new URL(location, target);
         if (
@@ -60,7 +68,10 @@ export async function backend<T>(
           next.hostname === "script.googleusercontent.com" ? "GET" : "POST";
         target = next.href;
       }
-      if (!response?.ok) throw new Error("Google transport failed");
+      if (!response?.ok) {
+        if (response && !response.bodyUsed) await response.body?.cancel();
+        throw new Error("Google transport failed");
+      }
       stage = "decode-json";
       result = await response.json();
       stage = "validate-result";

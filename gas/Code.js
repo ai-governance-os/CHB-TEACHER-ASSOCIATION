@@ -50,16 +50,33 @@ function doPost(e) {
         ),
       });
     }
-    var lock = LockService.getScriptLock();
-    if (!lock.tryLock(20000)) throw new Error("账本操作失败，请稍后重试");
-    try {
-      if (request.action === "throttle") {
+    if (request.action === "throttle") {
+      // Keep the counter atomic, but release the write lock BEFORE reading a sheet.
+      var loginLock = LockService.getScriptLock();
+      if (!loginLock.tryLock(20000))
+        throw new Error("账本操作失败，请稍后重试");
+      var allowed;
+      try {
         var cache = CacheService.getScriptCache(),
           key = "login:" + request.key,
           n = Number(cache.get(key) || 0);
         cache.put(key, String(n + 1), 900);
-        return json_({ ok: true, data: { allowed: n < 12 } });
+        allowed = n < 12;
+      } finally {
+        loginLock.releaseLock();
       }
+      var result = { allowed: allowed };
+      if (allowed && request.includeLedger === true) {
+        result.ledger = readLedger_(
+          SpreadsheetApp.openById(config.spreadsheetId),
+          bookTarget_(request.ledgerId),
+        );
+      }
+      return json_({ ok: true, data: result });
+    }
+    var lock = LockService.getScriptLock();
+    if (!lock.tryLock(20000)) throw new Error("账本操作失败，请稍后重试");
+    try {
       var book = SpreadsheetApp.openById(config.spreadsheetId);
       var target = bookTarget_(request.ledgerId);
       if (request.action === "write") {

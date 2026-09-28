@@ -157,9 +157,20 @@ export default async function handler(req: Request, res: ServerResponse) {
         req.headers["x-real-ip"] || req.socket?.remoteAddress || "unknown",
       );
       const key = createHash("sha256")
-        .update(client + "|" + b.username.toLowerCase())
+        .update(client + "|" + b.username.trim().toLowerCase())
         .digest("hex");
-      const throttle = await backend<{ allowed: boolean }>("throttle", { key });
+      const ledgerId = b.ledgerId ?? "teachers";
+      if (!isBookId(ledgerId)) throw new HttpError(400, "账本无效");
+      // Reserve the login attempt and obtain its first snapshot in ONE Google round trip.
+      // No session or financial data is returned until both rate limit and password pass.
+      const throttle = await backend<{ allowed: boolean; ledger?: Ledger }>(
+        "throttle",
+        {
+          key,
+          ledgerId,
+          includeLedger: b.includeLedger === true,
+        },
+      );
       if (!throttle.allowed)
         throw new HttpError(429, "尝试次数过多，请 15 分钟后再试");
       const u = users().find(
@@ -174,7 +185,11 @@ export default async function handler(req: Request, res: ServerResponse) {
           "; Path=/; HttpOnly; SameSite=Strict; Max-Age=43200" +
           (process.env.VERCEL ? "; Secure" : ""),
       );
-      return reply(200, { user: safeUser(u), configured: true });
+      return reply(200, {
+        user: safeUser(u),
+        configured: true,
+        ledger: throttle.ledger,
+      });
     }
     if (!user) throw new HttpError(401, "请先登录，或登录已过期");
     if (path === "ledger" && req.method === "GET") {

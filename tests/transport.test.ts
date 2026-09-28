@@ -8,17 +8,24 @@ test("Google canonical redirects preserve signed POST and result redirects use G
     "https://script.google.com/macros/s/test/exec";
   process.env.LEDGER_BACKEND_SECRET = "transport-test-secret";
   const calls: { url: string; init?: RequestInit }[] = [];
+  let released = 0;
+  const redirectBody = () =>
+    new ReadableStream({
+      cancel() {
+        released++;
+      },
+    });
   globalThis.fetch = (async (url, init) => {
     calls.push({ url: String(url), init });
     if (calls.length === 1)
-      return new Response(null, {
+      return new Response(redirectBody(), {
         status: 302,
         headers: {
           location: "https://script.google.com/macros/s/test/exec?canonical=1",
         },
       });
     if (calls.length === 2)
-      return new Response(null, {
+      return new Response(redirectBody(), {
         status: 302,
         headers: {
           location:
@@ -38,6 +45,11 @@ test("Google canonical redirects preserve signed POST and result redirects use G
     );
     assert.equal(calls[0].init?.body, calls[1].init?.body);
     assert.equal(calls[2].init?.body, undefined);
+    assert.equal(
+      released,
+      2,
+      "redirect streams must release connection resources",
+    );
   } finally {
     globalThis.fetch = original;
   }

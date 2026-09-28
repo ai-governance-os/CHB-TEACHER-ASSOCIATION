@@ -44,6 +44,7 @@ test("durable event append is idempotent, rejects stale edits and keeps void aud
           }),
         }
       : originalGet(name);
+  const loginAttempts = new Map<string, string>();
   const context = vm.createContext({
     console,
     Date,
@@ -69,6 +70,15 @@ test("durable event append is idempotent, rejects stale edits and keeps void aud
         Array.from(createHmac("sha256", key).update(body).digest()),
     },
     SpreadsheetApp: { openById: () => book, flush: () => {} },
+    CacheService: {
+      getScriptCache: () => ({
+        get: (key: string) => loginAttempts.get(key),
+        put: (key: string, value: string) => {
+          assert.ok(locked);
+          loginAttempts.set(key, value);
+        },
+      }),
+    },
     LockService: {
       getScriptLock: () => ({
         tryLock: () => {
@@ -165,4 +175,34 @@ test("durable event append is idempotent, rejects stale edits and keeps void aud
   for (const ledgerId of ["../teachers", "toString", "__proto__", "bad"]) {
     assert.equal(call({ ...create, ledgerId }).ok, false);
   }
+  let loginReads = 0;
+  context.SpreadsheetApp.openById = () => {
+    assert.equal(
+      locked,
+      false,
+      "login releases the global lock before reading",
+    );
+    loginReads++;
+    return book;
+  };
+  for (let i = 0; i < 12; i++) {
+    const signed = call({
+      action: "throttle",
+      key: "same-account",
+      ledgerId: "pta",
+      includeLedger: true,
+    });
+    assert.equal(signed.data.allowed, true);
+    assert.equal(signed.data.ledger.id, "pta");
+  }
+  const limited = call({
+    action: "throttle",
+    key: "same-account",
+    ledgerId: "pta",
+    includeLedger: true,
+  });
+  assert.equal(limited.data.allowed, false);
+  assert.equal(limited.data.ledger, undefined);
+  assert.equal(loginReads, 12, "a blocked attempt never reads financial data");
+  assert.equal(locked, false);
 });
