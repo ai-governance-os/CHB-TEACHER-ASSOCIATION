@@ -49,6 +49,7 @@ test("durable event append is idempotent, rejects stale edits and keeps void aud
       }),
     },
     Utilities: {
+      Charset: { UTF_8: "UTF-8" },
       computeHmacSha256Signature: (body: string, key: string) =>
         Array.from(createHmac("sha256", key).update(body).digest()),
     },

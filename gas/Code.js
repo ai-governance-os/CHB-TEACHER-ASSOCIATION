@@ -21,6 +21,7 @@ function doPost(e) {
     var expected = Utilities.computeHmacSha256Signature(
       envelope.body,
       config.secret,
+      Utilities.Charset.UTF_8,
     )
       .map(function (b) {
         return ("0" + ((b + 256) % 256).toString(16)).slice(-2);
