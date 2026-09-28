@@ -1,0 +1,161 @@
+.compact-review-note {
+  display: none;
+}
+
+@page {
+  size: A4 portrait;
+  margin: 9mm 10mm;
+}
+
+@media print {
+  .compact-report {
+    color: #17243c;
+    font-family: "Noto Sans SC Variable", sans-serif;
+  }
+
+  .compact-report .report-school {
+    gap: 9px;
+  }
+
+  .compact-report .report-school img {
+    width: 38px;
+    height: 38px;
+  }
+
+  .compact-report .report-school h2 {
+    font-size: 12pt;
+    letter-spacing: 1px;
+  }
+
+  .compact-report .report-school h3 {
+    font-size: 9pt;
+    letter-spacing: 0;
+  }
+
+  .compact-report .report-school p {
+    font-size: 5pt;
+    margin: 1px 0 2px;
+  }
+
+  .compact-report .report-period {
+    margin-top: 4px;
+    padding: 4px 0;
+    font-size: 7.5pt;
+    border-bottom-width: 1px;
+  }
+
+  .compact-report .report-stats {
+    margin-top: 5px;
+  }
+
+  .compact-report .report-stats > div {
+    padding: 4px 7px;
+  }
+
+  .compact-report .report-stats span {
+    font-size: 6pt;
+  }
+
+  .compact-report .report-stats strong {
+    font-size: 8pt;
+    margin-top: 2px;
+  }
+
+  .compact-report h4 {
+    font-size: 8pt;
+    margin: 7px 0 4px;
+  }
+
+  .compact-report .report-review,
+  .compact-report .report-checkpoints {
+    display: none !important;
+  }
+
+  .compact-report .compact-review-note {
+    display: block;
+    font-size: 6.5pt;
+    color: #785d37;
+    margin: 3px 0;
+  }
+
+  .compact-report .report-note {
+    font-size: 6.5pt;
+    margin: 3px 0;
+  }
+
+  .compact-report .report-table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-size: 7pt;
+  }
+
+  .compact-report .report-table th {
+    font-size: 6.5pt;
+    padding: 3px 4px;
+  }
+
+  .compact-report .report-table td {
+    font-size: 7pt;
+    line-height: 1.18;
+    padding: 2.5px 4px;
+    overflow-wrap: anywhere;
+  }
+
+  .compact-report .report-table th:first-child,
+  .compact-report .report-table td:first-child {
+    width: 22mm;
+  }
+
+  .compact-report .report-table th:nth-child(n + 3),
+  .compact-report .report-table td:nth-child(n + 3) {
+    width: 23mm;
+  }
+
+  .compact-report .report-table small {
+    display: inline;
+    font-size: 6pt;
+    color: #5a6880;
+    white-space: normal;
+  }
+
+  .compact-report .report-table small::before {
+    content: " · ";
+  }
+
+  .compact-report .report-categories {
+    gap: 15px;
+    font-size: 6.5pt;
+  }
+
+  .compact-report .report-categories > div > strong {
+    margin-bottom: 2px;
+  }
+
+  .compact-report .report-categories > div > div {
+    padding: 2px 0;
+  }
+
+  .compact-report .report-equation {
+    font-size: 7pt;
+    line-height: 1.25;
+    margin-top: 7px;
+    padding: 5px;
+  }
+
+  .compact-report .report-signatures {
+    gap: 30px;
+    margin-top: 22px;
+  }
+
+  .compact-report .report-signatures p {
+    font-size: 7pt;
+    margin-top: 3px;
+  }
+
+  .compact-report footer {
+    font-size: 6pt;
+    margin-top: 9px;
+    padding-top: 4px;
+  }
+}

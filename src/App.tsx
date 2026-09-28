@@ -66,12 +66,12 @@ const navigation = [
   { id: "settings", label: "账本设置", icon: Settings },
 ];
 const palette = [
-  "#2563eb",
-  "#06b6d4",
-  "#7c5ce7",
-  "#13366d",
-  "#799aed",
-  "#bcccf0",
+  "#48cfff",
+  "#9a7df7",
+  "#4ce2c4",
+  "#5b8eff",
+  "#dc8be8",
+  "#8db9f4",
 ];
 const emptyForm = {
   date: today(),
@@ -1094,7 +1094,7 @@ function App() {
                       </button>
                     </div>
                     <p className="print-tip">
-                      在打印窗口选择“另存为 PDF”即可下载；报告会自动按 A4 分页。
+                      全年及半年报告保留逐笔明细；在打印窗口选择“另存为 PDF”。
                     </p>
                     <Report ledger={ledger} period={period} demo={demo} />
                   </>
@@ -1710,7 +1710,7 @@ function TrendChart({ ledger, year }: { ledger: Ledger; year: number }) {
               width="13"
               height={Math.max(0, (v.income / ceiling) * 168)}
               rx="3"
-              fill="#2563eb"
+              fill="#42d2ff"
             >
               <title>
                 {v.month}月收入 RM {money(v.income)}
@@ -1722,7 +1722,7 @@ function TrendChart({ ledger, year }: { ledger: Ledger; year: number }) {
               width="13"
               height={Math.max(0, (v.expense / ceiling) * 168)}
               rx="3"
-              fill="#8aacef"
+              fill="#b490f8"
             >
               <title>
                 {v.month}月支出 RM {money(v.expense)}
@@ -1929,8 +1929,9 @@ function Report({
           .filter((t) => t.status === "active" && t.type === "expense")
           .reduce((n, t) => n + t.amountCents, 0)
       : s.expense;
+  const compactPrint = !filtered && /年(全年|上半年|下半年)$/.test(period.label);
   return (
-    <article className="report-paper">
+    <article className={"report-paper" + (compactPrint ? " compact-report" : "")}>
       <div className="report-school">
         <img src="/school-logo.jpg" alt="文林望中华学校校徽" />
         <div>
@@ -1995,13 +1996,18 @@ function Report({
           </ul>
         </div>
       )}
+      {compactPrint && !!ledger.reviewNotes?.length && (
+        <p className="compact-review-note">
+          历史资料待核对 · {ledger.reviewNotes.length} 项；完整核对说明见账本。
+        </p>
+      )}
       {!!s.adjustment && !filtered && (
         <p className="report-note">
           本期结转核对差额：RM {money(s.adjustment)}（独立列示，不计入收支）。
         </p>
       )}
       {!!ledger.balanceCheckpoints?.length && !filtered && (
-        <p className="report-note">
+        <p className="report-note report-checkpoints">
           结转依据：
           {ledger.balanceCheckpoints
             .map((p) => `${p.date} 期初 RM ${money(p.amountCents)}；${p.note}`)
@@ -2056,7 +2062,7 @@ function Report({
       </table>
       {!filtered && (
         <>
-          <h4>分类汇总</h4>
+          <h4 className="report-category-title">分类汇总</h4>
           <div className="report-categories">
             {(["income", "expense"] as TransactionType[]).map((type) => (
               <div key={type}>
