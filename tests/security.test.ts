@@ -26,7 +26,10 @@ test("sessions reject tampering, expiration and removed users", () => {
     },
   ]);
   const token = createSession("fiscal", 1000);
+  const anotherDevice = createSession("fiscal", 1000);
+  assert.notEqual(token, anotherDevice);
   assert.equal(readSession(token, 2000)?.role, "treasurer");
+  assert.equal(readSession(anotherDevice, 2000)?.role, "treasurer");
   assert.equal(readSession(token + "X", 2000), null);
   assert.equal(readSession(token, 1000 + 13 * 60 * 60 * 1000), null);
   process.env.LEDGER_USERS_JSON = "[]";

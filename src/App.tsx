@@ -231,6 +231,25 @@ function App() {
     }
   }, [session?.user, demo, bookId]);
   useEffect(() => {
+    if (!session?.user || demo) return;
+    let timer: number | undefined;
+    const onReturn = () => {
+      if (document.visibilityState !== "visible") return;
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        if (!loading && !saving && !bookCache.current.fresh(bookId))
+          void refresh();
+      }, 250);
+    };
+    window.addEventListener("focus", onReturn);
+    document.addEventListener("visibilitychange", onReturn);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("focus", onReturn);
+      document.removeEventListener("visibilitychange", onReturn);
+    };
+  }, [session?.user, demo, bookId, loading, saving]);
+  useEffect(() => {
     if (!toast) return;
     const t = setTimeout(() => setToast(""), 4500);
     return () => clearTimeout(t);
@@ -629,6 +648,8 @@ function App() {
                 <span />
                 {demo
                   ? "演示模式"
+                  : error
+                    ? "同步失败"
                   : loading
                     ? "正在同步"
                     : lastSync
@@ -735,9 +756,13 @@ function App() {
             )}
             {!ledger ? (
               <div className="loading-state">
-                <LoaderCircle className="spin" />
+                {loading ? <LoaderCircle className="spin" /> : <AlertCircle />}
                 <p>
-                  {loading ? "正在读取学校账本…" : "连接尚未完成，请重试。"}
+                  {loading
+                    ? "正在读取学校账本…"
+                    : error
+                      ? "同步失败，请点击上方重试。"
+                      : "连接尚未完成，请重试。"}
                 </p>
               </div>
             ) : (

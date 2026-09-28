@@ -83,6 +83,24 @@ test("a lost response retries the same event ID without accepting a service land
   }
 });
 
+test("an Apps Script error is not reported as a network interruption or retried", async () => {
+  const original = globalThis.fetch;
+  let calls = 0;
+  globalThis.fetch = async () => {
+    calls++;
+    return Response.json({ ok: false, error: "Unauthorized" });
+  };
+  try {
+    await assert.rejects(
+      backend("read", { ledgerId: "teachers" }),
+      /Google Sheets 授权失败/,
+    );
+    assert.equal(calls, 1);
+  } finally {
+    globalThis.fetch = original;
+  }
+});
+
 test("slow financial writes and failed passwords never start speculative requests", async (t) => {
   t.mock.timers.enable({ apis: ["setTimeout"] });
   const original = globalThis.fetch;
