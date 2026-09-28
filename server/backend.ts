@@ -1,5 +1,26 @@
 import { createHmac, randomUUID } from "node:crypto";
 import { withReadFallback } from "./read-fallback.js";
+class BackendResultError extends Error {}
+
+function backendErrorMessage(message?: string) {
+  if (message === "Unauthorized")
+    return "Google Sheets 授权失败，请联系管理员检查后端密钥与 Apps Script 部署";
+  if (
+    message &&
+    [
+      "账目已被修改",
+      "找不到账目",
+      "日期早于",
+      "已经作废",
+      "编号重复",
+      "账本操作失败",
+      "账本无效",
+    ].some((known) => message.includes(known))
+  )
+    return message;
+  return "Google Sheets 后端处理失败，请联系管理员检查 Apps Script 执行记录";
+}
+
 export async function backend<T>(
   action: string,
   payload: Record<string, unknown> = {},
@@ -8,8 +29,14 @@ export async function backend<T>(
     action === "read" ||
     (action === "throttle" && payload.credentialValid === true)
   ) {
-    return withReadFallback((signal) =>
-      requestBackend<T>(action, payload, signal, 1),
+    let requests = 0;
+    return withReadFallback(
+      (signal) => {
+        if (++requests === 2) console.warn("Ledger backup request", { action });
+        return requestBackend<T>(action, payload, signal, 1);
+      },
+      8000,
+      (error) => error instanceof BackendResultError,
     );
   }
   // Financial writes and failed passwords must never run speculative duplicates.
@@ -25,6 +52,7 @@ async function requestBackend<T>(
     secret = process.env.LEDGER_BACKEND_SECRET;
   if (!url || !secret) throw new Error("Google Sheets 尚未连接");
   for (let attempt = 0; attempt < attempts; attempt++) {
+    const startedAt = Date.now();
     const body = JSON.stringify({
       action,
       ...payload,
@@ -43,7 +71,8 @@ async function requestBackend<T>(
     try {
       let target = url;
       let method = "POST";
-      const deadline = AbortSignal.timeout(30000);
+      // Two sequential write attempts must fit inside the 60-second function limit.
+      const deadline = AbortSignal.timeout(28000);
       const signal = outerSignal
         ? AbortSignal.any([deadline, outerSignal])
         : deadline;
@@ -60,11 +89,11 @@ async function requestBackend<T>(
               }
             : {}),
           redirect: "manual",
-          // A ContentService result is already computed. Retry a stalled download
-          // promptly; the slower signed execution still gets its full budget.
+          // The ContentService result is at a one-time redirect URL. Give its
+          // download time to complete before repeating the signed execution.
           signal:
             method === "GET"
-              ? AbortSignal.any([signal, AbortSignal.timeout(8000)])
+              ? AbortSignal.any([signal, AbortSignal.timeout(15000)])
               : signal,
         });
         status = response.status;
@@ -107,11 +136,24 @@ async function requestBackend<T>(
         stage,
         status,
         hops,
+        elapsedMs: Date.now() - startedAt,
       });
       if (attempt + 1 < attempts) continue;
       throw new Error("Google Sheets 连接暂时中断，内容已保留，请重试");
     }
-    if (!result.ok) throw new Error(result.error || "账本操作失败");
+    if (!result.ok) {
+      const message = backendErrorMessage(result.error);
+      console.warn("Ledger backend rejected", {
+        action,
+        kind:
+          result.error === "Unauthorized"
+            ? "authorization"
+            : message.includes("后端处理失败")
+              ? "script"
+              : "operation",
+      });
+      throw new BackendResultError(message);
+    }
     return result.data as T;
   }
   throw new Error("Google Sheets 连接失败，请重试");

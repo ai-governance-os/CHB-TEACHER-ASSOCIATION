@@ -21,7 +21,7 @@ test("a stalled read uses one backup and aborts the losing connection", async (t
     );
   });
   assert.equal(calls, 1);
-  t.mock.timers.tick(3999);
+  t.mock.timers.tick(7999);
   assert.equal(calls, 1);
   t.mock.timers.tick(1);
   assert.equal(await result, "snapshot");
@@ -48,4 +48,23 @@ test("fast reads never start a backup; two failed reads surface a retryable erro
     /Google Sheets/,
   );
   assert.equal(calls, 3);
+});
+
+test("a backend result error stops the backup and keeps its message", async (t) => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  let calls = 0;
+  const backendError = new Error("账本设置无效");
+  await assert.rejects(
+    withReadFallback(
+      async () => {
+        calls++;
+        throw backendError;
+      },
+      8000,
+      (error) => error === backendError,
+    ),
+    (error) => error === backendError,
+  );
+  t.mock.timers.tick(10000);
+  assert.equal(calls, 1);
 });

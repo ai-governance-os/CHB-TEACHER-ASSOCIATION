@@ -12,8 +12,14 @@ test("durable event append is idempotent, rejects stale edits and keeps void aud
       ["sourceNote", "test"],
     ];
   let locked = false;
+  let eventReads = 0;
   const sheet = {
-    getDataRange: () => ({ getValues: () => rows }),
+    getDataRange: () => ({
+      getValues: () => {
+        eventReads++;
+        return rows;
+      },
+    }),
     getLastRow: () => rows.length,
     getRange: () => ({
       setValues: (values: unknown[][]) => {
@@ -125,6 +131,7 @@ test("durable event append is idempotent, rejects stale edits and keeps void aud
   assert.equal(rows.length, 1);
   assert.equal(call(create).data.transactions[0].amountCents, 100);
   assert.equal(rows.length, 2);
+  assert.equal(eventReads, 1, "write must read the event sheet only once");
   assert.equal(locked, false);
   assert.equal(call(create).ok, true);
   assert.equal(rows.length, 2);

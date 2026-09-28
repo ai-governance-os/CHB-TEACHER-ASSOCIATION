@@ -629,6 +629,8 @@ function App() {
                 <span />
                 {demo
                   ? "演示模式"
+                  : error
+                    ? "同步失败"
                   : loading
                     ? "正在同步"
                     : lastSync
@@ -735,9 +737,13 @@ function App() {
             )}
             {!ledger ? (
               <div className="loading-state">
-                <LoaderCircle className="spin" />
+                {loading ? <LoaderCircle className="spin" /> : <AlertCircle />}
                 <p>
-                  {loading ? "正在读取学校账本…" : "连接尚未完成，请重试。"}
+                  {loading
+                    ? "正在读取学校账本…"
+                    : error
+                      ? "同步失败，请点击上方重试。"
+                      : "连接尚未完成，请重试。"}
                 </p>
               </div>
             ) : (

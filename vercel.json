@@ -3,6 +3,7 @@
   "outputDirectory": "dist",
   "framework": "vite",
   "regions": ["sin1"],
+  "functions": { "api/index.ts": { "maxDuration": 60 } },
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api" },
     { "source": "/((?!api/|assets/).*)", "destination": "/index.html" }

@@ -231,19 +231,22 @@ export default async function handler(req: Request, res: ServerResponse) {
     if (error instanceof HttpError)
       return reply(error.status, { error: error.message });
     const message = error instanceof Error ? error.message : "服务暂时无法连接";
-    const known = [
+    const conflicts = [
       "账目已被修改",
       "找不到账目",
       "日期早于",
       "已经作废",
       "编号重复",
-      "Google Sheets",
-      "账本操作失败",
     ];
-    reply(known.some((s) => message.includes(s)) ? 409 : 502, {
-      error: known.some((s) => message.includes(s))
-        ? message
-        : "暂时无法完成，请重试。未确认成功的内容会保留。",
+    const conflict = conflicts.some((s) => message.includes(s));
+    const serviceError =
+      message.includes("Google Sheets") ||
+      message.includes("账本操作失败");
+    reply(conflict ? 409 : serviceError ? 503 : 502, {
+      error:
+        conflict || serviceError
+          ? message
+          : "暂时无法完成，请重试。未确认成功的内容会保留。",
     });
   }
 }

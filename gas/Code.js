@@ -167,7 +167,21 @@ function doPost(e) {
           .getRange(sheet.getLastRow() + 1, 1, 1, values.length)
           .setValues([values]);
         SpreadsheetApp.flush();
-        return json_({ ok: true, data: readLedger_(book, target) });
+        // The locked snapshot already contains every earlier event. Updating it
+        // in memory avoids a second full-sheet read after each append.
+        var index = ledger.transactions.findIndex(function (x) {
+          return x.id === stored.id;
+        });
+        if (index < 0) ledger.transactions.push(stored);
+        else ledger.transactions[index] = stored;
+        ledger.events.push({
+          eventId: request.eventId,
+          action: action,
+          transaction: stored,
+          actor: request.actor,
+          at: now,
+        });
+        return json_({ ok: true, data: ledger });
       }
       throw new Error("Unknown operation");
     } finally {
