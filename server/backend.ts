@@ -22,7 +22,7 @@ export async function backend<T>(
     try {
       let target = url;
       let method = "POST";
-      const signal = AbortSignal.timeout(18000);
+      const signal = AbortSignal.timeout(30000);
       let response: Response | undefined;
       for (let hop = 0; hop < 5; hop++) {
         response = await fetch(target, {
@@ -58,7 +58,12 @@ export async function backend<T>(
       result = await response.json();
       if (result.ok && result.data === undefined)
         throw new Error("Missing ledger result");
-    } catch {
+    } catch (error) {
+      console.warn("Ledger transport retry", {
+        action,
+        attempt: attempt + 1,
+        reason: error instanceof Error ? error.name : "Unknown",
+      });
       if (attempt === 0) continue;
       throw new Error("Google Sheets 连接暂时中断，内容已保留，请重试");
     }

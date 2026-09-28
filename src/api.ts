@@ -4,7 +4,7 @@ export async function api<T>(
   ledgerId?: string,
 ): Promise<T> {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 45000);
+  const timeout = setTimeout(() => controller.abort(), 75000);
   try {
     const r = await fetch(
       "/api?action=" +

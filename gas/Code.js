@@ -39,6 +39,17 @@ function doPost(e) {
     var request = JSON.parse(envelope.body);
     if (Math.abs(Date.now() - request.at) > 120000)
       throw new Error("Expired request");
+    // A write appends one complete row atomically. Reads can take a snapshot without
+    // holding the global write lock, so switching books cannot queue other readers.
+    if (request.action === "read") {
+      return json_({
+        ok: true,
+        data: readLedger_(
+          SpreadsheetApp.openById(config.spreadsheetId),
+          bookTarget_(request.ledgerId),
+        ),
+      });
+    }
     var lock = LockService.getScriptLock();
     if (!lock.tryLock(20000)) throw new Error("账本操作失败，请稍后重试");
     try {
@@ -51,8 +62,6 @@ function doPost(e) {
       }
       var book = SpreadsheetApp.openById(config.spreadsheetId);
       var target = bookTarget_(request.ledgerId);
-      if (request.action === "read")
-        return json_({ ok: true, data: readLedger_(book, target) });
       if (request.action === "write") {
         var ledger = readLedger_(book, target);
         if (
