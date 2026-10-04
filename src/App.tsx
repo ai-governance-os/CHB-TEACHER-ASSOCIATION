@@ -1940,6 +1940,8 @@ function Report({
   filtered?: Transaction[];
   query?: string;
 }) {
+  if (ledger.id === "pta" && !filtered)
+    return <PtaReport ledger={ledger} period={period} demo={demo} />;
   const s = summary(ledger, period),
     rows = filtered
       ? [...filtered].sort((a, b) => a.date.localeCompare(b.date))
@@ -2122,6 +2124,188 @@ function Report({
       <footer>
         <span>
           文林望中华学校 · {bookFor(ledger.id).name}
+          {demo ? " · 虚构数据，仅供演示" : ""}
+        </span>
+        <span>生成日期：{today()}</span>
+      </footer>
+    </article>
+  );
+}
+
+function PtaReport({
+  ledger,
+  period,
+  demo,
+}: {
+  ledger: Ledger;
+  period: Period;
+  demo: boolean;
+}) {
+  const s = summary(ledger, period),
+    incomeRows = s.rows.filter((t) => t.type === "income"),
+    expenseRows = s.rows.filter((t) => t.type === "expense"),
+    transferRows = s.rows.filter((t) => t.type === "transfer"),
+    available = s.opening + s.income + s.adjustment,
+    usedAndClosing = s.expense + s.closing;
+  const shortDate = (date: string) => {
+    const [year, month, day] = date.split("-");
+    return `${day}.${month}.${year.slice(-2)}`;
+  };
+  const detail = (t: Transaction) =>
+    [t.category, t.party, t.note].filter(Boolean).join(" · ");
+  const table = (
+    kind: "income" | "expense",
+    rows: Transaction[],
+    total: number,
+  ) => (
+    <section className="pta-ledger-side">
+      <h4>{kind === "income" ? "收入" : "支出"}</h4>
+      <table className="pta-ledger-table">
+        <thead>
+          <tr>
+            <th>日期</th>
+            <th>项目</th>
+            <th>RM</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.length ? (
+            rows.map((t) => (
+              <tr key={t.id}>
+                <td>{shortDate(t.date)}</td>
+                <td>
+                  {t.description}
+                  {detail(t) && <small>{detail(t)}</small>}
+                </td>
+                <td>{money(t.amountCents)}</td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan={3} className="pta-empty">
+                本期无{kind === "income" ? "收入" : "支出"}
+              </td>
+            </tr>
+          )}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colSpan={2}>{kind === "income" ? "收入共计" : "支出共计"}</td>
+            <td>{money(total)}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </section>
+  );
+  return (
+    <article className="report-paper pta-statement">
+      <header className="pta-report-heading">
+        <img src="/school-logo.jpg" alt="文林望中华学校校徽" />
+        <div>
+          <p>文林望中华学校 · 家教协会</p>
+          <h2>财政报告</h2>
+          <strong>
+            {period.label}
+            {demo ? " · 演示报告" : ""}
+          </strong>
+          <span>
+            {shortDate(period.start)} 至 {shortDate(period.end)}
+          </span>
+        </div>
+      </header>
+
+      {period.end > today() && (
+        <p className="pta-report-note">
+          本期间尚未结束 · 数据截至 {today()}，未来日期账目如有录入亦列于明细。
+        </p>
+      )}
+      {!!ledger.reviewNotes?.length && (
+        <aside className="pta-review-note">
+          <strong>历史账目待核对</strong>
+          <ul>
+            {ledger.reviewNotes.map((note, index) => (
+              <li key={index}>{note}</li>
+            ))}
+          </ul>
+        </aside>
+      )}
+
+      <div className="pta-ledger-columns">
+        {table("income", incomeRows, s.income)}
+        {table("expense", expenseRows, s.expense)}
+      </div>
+
+      {!!transferRows.length && (
+        <section className="pta-transfer-section">
+          <h4>账户内部转账（不计入收入及支出）</h4>
+          {transferRows.map((t) => (
+            <p key={t.id}>
+              <time>{shortDate(t.date)}</time>
+              <span>{t.description}</span>
+              <b>RM {money(t.amountCents)}</b>
+            </p>
+          ))}
+        </section>
+      )}
+
+      <div className="pta-balance-columns">
+        <section>
+          <h4>资金来源</h4>
+          <p>
+            <span>承前存来</span>
+            <b>RM {money(s.opening)}</b>
+          </p>
+          <p>
+            <span>收入共计</span>
+            <b>RM {money(s.income)}</b>
+          </p>
+          {!!s.adjustment && (
+            <p>
+              <span>结转核对差额</span>
+              <b>
+                {s.adjustment > 0 ? "+" : "−"}RM {money(Math.abs(s.adjustment))}
+              </b>
+            </p>
+          )}
+          <p className="pta-balance-total">
+            <span>承前存来及收入共计</span>
+            <b>RM {money(available)}</b>
+          </p>
+        </section>
+        <section>
+          <h4>资金结存</h4>
+          <p>
+            <span>支出共计</span>
+            <b>RM {money(s.expense)}</b>
+          </p>
+          <p>
+            <span>本会现有结余</span>
+            <b>RM {money(s.closing)}</b>
+          </p>
+          <p className="pta-balance-total">
+            <span>结余及支出共计</span>
+            <b>RM {money(usedAndClosing)}</b>
+          </p>
+        </section>
+      </div>
+      <p className="pta-reconciliation">
+        资金核对 · 来源 RM {money(available)} = 支出及结余 RM {money(usedAndClosing)}
+      </p>
+      <p className="pta-balance-disclosure">
+        余额为家协账本合计，未拆分定期存款、储蓄户口及财政保管款。
+      </p>
+
+      <div className="pta-signatures">
+        {["财政", "稽查"].map((role) => (
+          <div key={role}>
+            <span />
+            <p>{role}签名</p>
+          </div>
+        ))}
+      </div>
+      <footer>
+        <span>
+          文林望中华学校 · 家教协会财政报告
           {demo ? " · 虚构数据，仅供演示" : ""}
         </span>
         <span>生成日期：{today()}</span>

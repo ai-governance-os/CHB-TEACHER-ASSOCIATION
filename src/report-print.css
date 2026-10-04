@@ -2,6 +2,304 @@
   display: none;
 }
 
+.pta-statement {
+  --pta-ink: #16263f;
+  --pta-muted: #607089;
+  --pta-line: #dce4ee;
+  color: var(--pta-ink);
+  padding: 42px 46px 28px;
+  font-variant-numeric: tabular-nums;
+}
+
+.pta-report-heading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding-bottom: 17px;
+  border-bottom: 2px solid var(--pta-ink);
+}
+
+.pta-report-heading img {
+  display: block;
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+}
+
+.pta-report-heading > div {
+  display: grid;
+  justify-items: start;
+  gap: 3px;
+}
+
+.pta-report-heading p,
+.pta-report-heading h2,
+.pta-report-heading strong,
+.pta-report-heading span {
+  margin: 0;
+}
+
+.pta-report-heading p {
+  color: var(--pta-muted);
+  font-size: 10px;
+  letter-spacing: 1.4px;
+}
+
+.pta-report-heading h2 {
+  font-family: "Noto Serif SC", serif;
+  font-size: 23px;
+  letter-spacing: 2px;
+}
+
+.pta-report-heading strong {
+  font-size: 12px;
+}
+
+.pta-report-heading span {
+  color: var(--pta-muted);
+  font-size: 10px;
+}
+
+.pta-report-note,
+.pta-review-note {
+  margin: 12px 0 0;
+  border-radius: 5px;
+  background: #f3f6fa;
+  padding: 8px 10px;
+  color: var(--pta-muted);
+  font-size: 10px;
+}
+
+.pta-review-note {
+  border-left: 3px solid #d09442;
+  background: #fbf6ed;
+  color: #684f2b;
+}
+
+.pta-review-note strong {
+  display: block;
+  margin-bottom: 3px;
+}
+
+.pta-review-note ul {
+  margin: 0;
+  padding-left: 17px;
+}
+
+.pta-ledger-columns,
+.pta-balance-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 18px;
+}
+
+.pta-ledger-columns {
+  margin-top: 18px;
+  align-items: start;
+}
+
+.pta-ledger-side h4,
+.pta-balance-columns h4,
+.pta-transfer-section h4 {
+  margin: 0 0 7px;
+  color: var(--pta-ink);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.pta-ledger-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: 10px;
+}
+
+.pta-ledger-table th {
+  padding: 7px 5px;
+  border-bottom: 1px solid #bac9db;
+  background: #edf2f8;
+  color: #536985;
+  font-size: 9px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.pta-ledger-table td {
+  padding: 6px 5px;
+  border-bottom: 1px solid var(--pta-line);
+  line-height: 1.45;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+
+.pta-ledger-table th:first-child,
+.pta-ledger-table td:first-child {
+  width: 48px;
+  white-space: nowrap;
+}
+
+.pta-ledger-table th:last-child,
+.pta-ledger-table td:last-child {
+  width: 72px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.pta-ledger-table small {
+  display: block;
+  color: var(--pta-muted);
+  font-size: 8px;
+  line-height: 1.35;
+  white-space: pre-line;
+}
+
+.pta-ledger-table tfoot {
+  font-weight: 700;
+}
+
+.pta-ledger-table tfoot td {
+  border-top: 1px solid #bac9db;
+  border-bottom: 2px solid var(--pta-ink);
+  background: #f7f9fc;
+}
+
+.pta-empty {
+  color: #7b8da4;
+  text-align: center;
+}
+
+.pta-transfer-section {
+  margin-top: 12px;
+  border-top: 1px solid var(--pta-line);
+  padding-top: 9px;
+}
+
+.pta-transfer-section p {
+  display: grid;
+  grid-template-columns: 65px 1fr auto;
+  gap: 8px;
+  margin: 0;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--pta-line);
+  font-size: 9px;
+}
+
+.pta-transfer-section time {
+  color: var(--pta-muted);
+}
+
+.pta-balance-columns {
+  margin-top: 17px;
+  padding: 12px 14px;
+  border: 1px solid var(--pta-line);
+  background: #f8fafc;
+}
+
+.pta-balance-columns section > p {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0;
+  padding: 4px 0;
+  border-bottom: 1px solid #e7edf4;
+  font-size: 10px;
+}
+
+.pta-balance-columns section > p span {
+  color: var(--pta-muted);
+}
+
+.pta-balance-columns .pta-balance-total {
+  margin-top: 3px;
+  border-bottom: 0;
+  color: var(--pta-ink);
+  font-weight: 700;
+}
+
+.pta-balance-columns .pta-balance-total span {
+  color: var(--pta-ink);
+}
+
+.pta-reconciliation {
+  margin: 8px 0 0;
+  padding: 7px 10px;
+  border: 1px solid #d5e3f4;
+  background: #eef5fd;
+  color: #315f8c;
+  font-size: 10px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.pta-balance-disclosure {
+  margin: 5px 0 0;
+  color: var(--pta-muted);
+  font-size: 8px;
+  text-align: center;
+}
+
+.pta-signatures {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 70px;
+  margin: 42px auto 0;
+  max-width: 680px;
+  text-align: center;
+}
+
+.pta-signatures span {
+  display: block;
+  border-top: 1px solid #7f8ca0;
+}
+
+.pta-signatures p {
+  margin: 6px 0 0;
+  color: var(--pta-muted);
+  font-size: 10px;
+}
+
+.pta-statement footer {
+  margin-top: 18px;
+  padding-top: 8px;
+  border-top: 1px solid var(--pta-line);
+  color: var(--pta-muted);
+  font-size: 8px;
+}
+
+@media (max-width: 680px) {
+  .pta-statement {
+    padding: 24px 15px 20px;
+  }
+
+  .pta-report-heading {
+    gap: 10px;
+  }
+
+  .pta-report-heading img {
+    width: 46px;
+    height: 46px;
+  }
+
+  .pta-report-heading h2 {
+    font-size: 19px;
+  }
+
+  .pta-ledger-columns,
+  .pta-balance-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .pta-ledger-columns {
+    gap: 16px;
+  }
+
+  .pta-signatures {
+    gap: 30px;
+    margin-top: 30px;
+  }
+}
+
 @page {
   size: A4 portrait;
   margin: 9mm 10mm;
@@ -157,5 +455,167 @@
     font-size: 6pt;
     margin-top: 9px;
     padding-top: 4px;
+  }
+
+  .pta-statement {
+    color: #16263f;
+    padding: 0;
+    font-family: "Noto Sans SC Variable", sans-serif;
+    font-size: 7pt;
+  }
+
+  .pta-report-heading {
+    gap: 8px;
+    padding-bottom: 6px;
+    border-bottom-width: 1px;
+    break-after: avoid;
+  }
+
+  .pta-report-heading img {
+    width: 34px;
+    height: 34px;
+  }
+
+  .pta-report-heading > div {
+    gap: 1px;
+  }
+
+  .pta-report-heading p {
+    font-size: 5pt;
+    letter-spacing: 0.6px;
+  }
+
+  .pta-report-heading h2 {
+    font-size: 12pt;
+    letter-spacing: 1px;
+  }
+
+  .pta-report-heading strong {
+    font-size: 7pt;
+  }
+
+  .pta-report-heading span {
+    font-size: 6pt;
+  }
+
+  .pta-report-note,
+  .pta-review-note {
+    margin-top: 4px;
+    padding: 4px 6px;
+    border-radius: 2px;
+    font-size: 6pt;
+    break-inside: avoid;
+  }
+
+  .pta-review-note ul {
+    padding-left: 12px;
+  }
+
+  .pta-ledger-columns,
+  .pta-balance-columns {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 7mm;
+  }
+
+  .pta-ledger-columns {
+    margin-top: 7px;
+    align-items: start;
+  }
+
+  .pta-ledger-side h4,
+  .pta-balance-columns h4,
+  .pta-transfer-section h4 {
+    margin: 0 0 3px;
+    font-size: 7pt;
+  }
+
+  .pta-ledger-table {
+    font-size: 6.5pt;
+  }
+
+  .pta-ledger-table th {
+    padding: 2px 3px;
+    font-size: 6pt;
+  }
+
+  .pta-ledger-table td {
+    padding: 2px 3px;
+    line-height: 1.2;
+  }
+
+  .pta-ledger-table th:first-child,
+  .pta-ledger-table td:first-child {
+    width: 13mm;
+  }
+
+  .pta-ledger-table th:last-child,
+  .pta-ledger-table td:last-child {
+    width: 16mm;
+  }
+
+  .pta-ledger-table small {
+    font-size: 5.4pt;
+    line-height: 1.1;
+  }
+
+  .pta-ledger-table thead {
+    display: table-header-group;
+  }
+
+  .pta-ledger-table tr {
+    break-inside: avoid;
+  }
+
+  .pta-transfer-section {
+    margin-top: 5px;
+    padding-top: 4px;
+    break-inside: avoid;
+  }
+
+  .pta-transfer-section p {
+    grid-template-columns: 16mm 1fr auto;
+    gap: 4px;
+    padding: 2px 0;
+    font-size: 6pt;
+  }
+
+  .pta-balance-columns {
+    margin-top: 7px;
+    padding: 5px 7px;
+    break-inside: avoid;
+  }
+
+  .pta-balance-columns section > p {
+    padding: 2px 0;
+    font-size: 6pt;
+  }
+
+  .pta-reconciliation {
+    margin-top: 4px;
+    padding: 4px 6px;
+    font-size: 6pt;
+    break-inside: avoid;
+  }
+
+  .pta-balance-disclosure {
+    margin-top: 3px;
+    font-size: 5.5pt;
+  }
+
+  .pta-signatures {
+    gap: 24mm;
+    margin: 14px auto 0;
+    break-inside: avoid;
+  }
+
+  .pta-signatures p {
+    margin-top: 3px;
+    font-size: 6pt;
+  }
+
+  .pta-statement footer {
+    margin-top: 7px;
+    padding-top: 4px;
+    font-size: 5.5pt;
   }
 }
